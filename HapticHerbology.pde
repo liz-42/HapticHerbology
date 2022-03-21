@@ -186,8 +186,6 @@ Float[][] allHorLinePositions = {posHorLine1, posHorLine2, posHorLine3, posHorLi
                                  posHorLine9, posHorLine10, posHorLine11};
 
 
-
-
 /* generic data for a 2DOF device */
 /* joint space */
 PVector           angles                              = new PVector(0, 0);
@@ -196,6 +194,9 @@ PVector           torques                             = new PVector(0, 0);
 /* task space */
 PVector           posEE                               = new PVector(0, 0);
 PVector           fEE                                 = new PVector(0, 0); 
+
+PVector posCursor = new PVector(-1,-1);
+PVector newPos = new PVector(0,0);
 
 /* device graphical position */
 PVector           deviceOrigin                        = new PVector(0, 0);
@@ -232,12 +233,37 @@ PShape[] allHorLines = {horLine1, horLine2, horLine3, horLine4, horLine5, horLin
 // background and other image
 PImage bark_template;
 PImage bark_detailed;
+PImage bark_BAW;
+PImage bark_GREY;
+
+PImage temp_image;
+PImage left_image;
+int left_image_margin_x = 20;
+int left_image_margin_y = 80;
+
+PImage right_image;
+int right_image_margin_x = left_image_margin_x + 40;
+int right_image_margin_y = left_image_margin_y;
+
+PShape[] right_image_lines = {};
 
 
+int screen_width = 650;
+int screen_height = 584;
 // states for testing
-String state = "lines";
+//String state = "lines";
+String state = "simple_image";
+String renderTechnique = "";
 
+float[][] kernel = {{ -1, -1, -1}, 
+                    { -1,  9, -1}, 
+                    { -1, -1, -1}};
 
+                    
+float v = 1.0 / 9.0;
+float[][] kernel_blur = {{ v, v, v }, 
+                         { v, v, v }, 
+                         { v, v, v }};
 /* end elements definition *********************************************************************************************/ 
 
 
@@ -247,7 +273,7 @@ void setup(){
   /* put setup code here, run once: */
   
   /* screen size definition */
-  size(1000, 650);
+  size(650, 584);
   
   /* device setup */
   
@@ -260,42 +286,160 @@ void setup(){
    *      linux:        haplyBoard = new Board(this, "/dev/ttyUSB0", 0);
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
-  haplyBoard          = new Board(this, "COM4", 0);
+  
+  haplyBoard          = null;//new Board(this, "COM7", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
-  widgetOne.set_mechanism(pantograph);
+  //widgetOne.set_mechanism(pantograph);
   
-  widgetOne.add_actuator(1, CCW, 2);
-  widgetOne.add_actuator(2, CW, 1);
+  //widgetOne.add_actuator(1, CCW, 2);
+  //widgetOne.add_actuator(2, CW, 1);
 
-  widgetOne.add_encoder(1, CCW, 241, 10752, 2);
-  widgetOne.add_encoder(2, CW, -61, 10752, 1);
+  //widgetOne.add_encoder(1, CCW, 241, 10752, 2);
+  //widgetOne.add_encoder(2, CW, -61, 10752, 1);
   
-  widgetOne.device_set_parameters();
+  //widgetOne.device_set_parameters();
     
   
   /* visual elements setup */
-  background(0);
+  background(125);
   deviceOrigin.add(worldPixelWidth/2, 0);
   
-  /* create pantagraph graphics */
-  create_pantagraph();
+  // /* create pantagraph graphics */
+  // create_pantagraph();
   
-  /* create wall graphics */
-  create_line_graphics(allLines, allLinePositions);
+  // /* create wall graphics */
+  // create_line_graphics(allLines, allLinePositions);
   
-  // create line graphics for horizontal lines
-  create_hor_line_graphics(allHorLines, allHorLinePositions);
+  // // create line graphics for horizontal lines
+  // create_hor_line_graphics(allHorLines, allHorLinePositions);
+
+  // load images
+  // bark_template = loadImage("oak_bark_black_and_white.jpg");
+  // bark_detailed = loadImage("oak_bark.jpg");
+  // bark_template = loadImage("oak_bark_black_and_white.jpg");
+  left_image = loadImage("oak_bark.jpg");
+  left_image.filter(THRESHOLD);
+  right_image = loadImage("oak_bark.jpg");
+  right_image.filter(THRESHOLD);
+  // temp_image = createImage(left_image.width, left_image.height, RGB);
+  // right_image = createImage(left_image.width, left_image.height, RGB);
+  right_image_margin_x += left_image.width;
+
+  image(left_image, left_image_margin_x, left_image_margin_y);
+  image(right_image, right_image_margin_x, right_image_margin_y);
+
+  left_image.loadPixels();
+  // temp_image.loadPixels();
+  right_image.loadPixels();
+
+  textSize(48);
+  text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
+  text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
+
+  textSize(24);
+  text("This image tracks position", left_image_margin_x, left_image_margin_y + left_image.height + 40);
+  text("This image has pre-lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
   
+  // for (int y = 1; y < left_image.height-1; y++) { // Skip top and bottom edges
+  //   for (int x = 1; x < left_image.width-1; x++) { // Skip left and right edges
+  //     float sum = 0; // Kernel sum for this pixel
+  //     for (int ky = -1; ky <= 1; ky++) {
+  //       for (int kx = -1; kx <= 1; kx++) {
+  //         // Calculate the adjacent pixel for this kernel point
+  //         int pos = (y + ky)*left_image.width + (x + kx);
+  //         // Image is grayscale, red/green/blue are identical
+  //         float val = red(left_image.pixels[pos]);
+  //         // Multiply adjacent pixels based on the kernel values
+  //         sum += kernel[ky+1][kx+1] * val;
+  //       }
+  //     }
+  //     // For this pixel in the new image, set the gray value
+  //     // based on the sum from the kernel
+  //     temp_image.pixels[y*left_image.width + x] = color(sum, sum, sum);
+  //   }
+  // }
+
+
+  // for (int y = 1; y < temp_image.height-1; y++) {   // Skip top and bottom edges
+  //     for (int x = 1; x < temp_image.width-1; x++) {  // Skip left and right edges
+  //       float sum = 0; // Kernel sum for this pixel
+  //       for (int ky = -1; ky <= 1; ky++) {
+  //         for (int kx = -1; kx <= 1; kx++) {
+  //           // Calculate the adjacent pixel for this kernel point
+  //           int pos = (y + ky)*temp_image.width + (x + kx);
+  //           // Image is grayscale, red/green/blue are identical
+  //           float val = red(temp_image.pixels[pos]);
+  //           // Multiply adjacent pixels based on the kernel values
+  //           sum += kernel_blur[ky+1][kx+1] * val;
+  //         }
+  //       }
+  //       // For this pixel in the new image, set the gray value
+  //       // based on the sum from the kernel
+  //       right_image.pixels[y*temp_image.width + x] = color(sum);
+  //     }
+  //   }
+
+  // right_image.updatePixels();
+  // image(right_image, right_image_margin_x, right_image_margin_y);
+
+  // Read image vertically
+  // Create lines accordingly
+  // right_image_lines = [];
+  int black = 0;
+  int startJ = 0;
+  int lines = 0;
   
+  for (int i = 0; i < right_image.width; i++) {
+    println("line", i);
+    for (int j = 0; j < right_image.height; j++) {
+      float pixel = red(right_image.pixels[i + j * right_image.width]);
+
+      if(pixel < 10){
+        if(black == 0){
+          startJ = j;
+        }
+        black++;
+      }
+      if(pixel >= 5 || j == right_image.height-1){
+        if(black >= 10){
+          lines++;
+          PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
+          temp.setStroke(color(0,0,150));
+          shape(temp);
+        }
+          black = 0;
+      }
+    
+    }
+    println("lines :", lines);
+    black = 0;
+    lines = 0;
+  }
+
+
+  // noStroke();
+  
+  // fill(0,0,255);
+  // beginShape();
+  // // Create lines in the right_image
+  // for (int i = 0; i < right_image.width; ++i) {
+  //   for (int j = 0; j < right_image.height; ++j) {
+  //     int loc = i + j * right_image.width;
+  //     float r = red(right_image.pixels[loc]);
+  //     float g = green(right_image.pixels[loc]);
+  //     float b = blue(right_image.pixels[loc]);
+
+  //     if ((r + g + b) / 3 < 1) {
+  //       vertex(i + right_image_margin_x, j + right_image_margin_y);
+  //     }
+  //   }
+  // }
+  // endShape(CLOSE);
+
   /* setup framerate speed */
   frameRate(baseFrameRate);
-  
-  // load images
-  bark_template = loadImage("oak_bark_black_and_white.jpg");
-  bark_detailed = loadImage("oak_bark.jpg");
-  
   
   /* setup simulation thread to run at 1kHz */ 
   SimulationThread st = new SimulationThread();
@@ -304,14 +448,32 @@ void setup(){
 }
 /* end setup section ***************************************************************************************************/
 
-
-
 /* draw section ********************************************************************************************************/
 void draw(){
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
-  if(renderingForce == false){
-    background(152,190,100);
+  if (renderingForce == false){
+    // background(152,190,100);
     update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
+  }
+
+  // Equivalent to MouseMoved()
+  if(renderingForce){
+    newPos = new PVector(mouseX - left_image_margin_x, mouseY - left_image_margin_y);
+    
+    if(newPos.x != posCursor.x || newPos.y != posCursor.y){
+      // Inside left image
+      if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
+        // println("Mouse loc", mouseX, mouseY);
+
+        float loc = newPos.x + newPos.y * left_image.width;
+        float r = red(left_image.pixels[int(loc)]);
+        float g = green(left_image.pixels[int(loc)]);
+        float b = blue(left_image.pixels[int(loc)]);
+
+        // println("loc: ", loc, " rgb:", r,g,b);
+      }
+      posCursor = newPos;
+    }
   }
 }
 /* end draw section ****************************************************************************************************/
@@ -414,6 +576,7 @@ class SimulationThread implements Runnable{
     torques.set(widgetOne.set_device_torques(fEE.array()));
     widgetOne.device_write_torques();
   
+    
   
     renderingForce = false;
   }
@@ -437,6 +600,37 @@ void create_hor_line_graphics(PShape[] shapes, Float[][] positions) {
   }
 }
 
+void create_lines_from_image(){
+  println("Create Lines From Image");
+  // bark_detailed = loadImage("oak_bark.jpg");
+  // bark_template = loadImage("oak_bark_black_and_white.jpg");
+  // bark_BAW = loadImage("oak_bark.jpg");
+  // bark_GREY = loadImage("oak_bark.jpg");
+  // bark_BAW.filter(THRESHOLD);
+  // bark_GREY.filter(GRAY);
+  int white = 0;
+  int black = 0;
+  float threshold = 255/2;
+  bark_BAW.loadPixels();
+  for (int i = 0; i < bark_BAW.height; ++i) {
+    for (int j = 0; j < bark_BAW.width; ++j) {
+      int loc = j + i * bark_BAW.width;
+      float r = red(bark_BAW.pixels[loc]);
+      float g = green(bark_BAW.pixels[loc]);
+      float b = blue(bark_BAW.pixels[loc]);
+
+      if((r+g+b)/3 >= threshold){
+        white++;
+      } else {
+        black++;
+      }
+      
+    }
+  }
+
+  println("White pixels: ", white);
+  println("Black pixels: ", black);
+}
 
 void create_pantagraph(){
   float rEEAni = pixelsPerMeter * (rEE/2);
@@ -447,7 +641,6 @@ void create_pantagraph(){
   strokeWeight(5);
   
 }
-
 
 PVector calculate_line_force(float[] offsets, PVector pen_wall) {
   PVector force = new PVector(0,0);
@@ -462,7 +655,6 @@ PVector calculate_line_force(float[] offsets, PVector pen_wall) {
   return force;
 }
 
-
 PShape create_wall(float x1, float y1, float x2, float y2){
   x1 = pixelsPerMeter * x1;
   y1 = pixelsPerMeter * y1;
@@ -472,23 +664,28 @@ PShape create_wall(float x1, float y1, float x2, float y2){
   return createShape(LINE, deviceOrigin.x + x1, deviceOrigin.y + y1, deviceOrigin.x + x2, deviceOrigin.y+y2);
 }
 
-
 void update_animation(float th1, float th2, float xE, float yE){
-  background(152,190,100);
+  //background(152,190,100);
 
   xE = pixelsPerMeter * xE;
   yE = pixelsPerMeter * yE;
   
   if (state == "lines") {
-    for(int i=0; i < allLines.length; i++) {
-      shape(allLines[i]);
-    }
+    //for(int i=0; i < allLines.length; i++) {
+    //  shape(allLines[i]);
+    //}
   }
   else if (state == "simple_image") {
-    image(bark_template, 350, 150);
+    //image(bark_template, 350, 150);
+    // background(bark_template);
   }
   else if (state == "detailed_image") {
-    image(bark_detailed, 350, 150);
+    // background(bark_detailed);
+    //image(bark_detailed, 350, 150);
+  } else if (state == "blackandwhite"){
+    // background(bark_BAW);
+  } else if (state == "greyscale"){
+    // background(bark_GREY);
   }
   
   
@@ -496,34 +693,60 @@ void update_animation(float th1, float th2, float xE, float yE){
     //  shape(allHorLines[i]);
     //}
   
-    translate(xE, yE);
-    shape(endEffector);
+    // translate(xE, yE);
+    // shape(endEffector);
 }
-
 
 PVector device_to_graphics(PVector deviceFrame){
   return deviceFrame.set(-deviceFrame.x, deviceFrame.y);
 }
 
-
 PVector graphics_to_device(PVector graphicsFrame){
   return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
 }
 
-
 // change state when any key pressed
 void keyPressed() {
+  println("keyPressed", keyCode);
   if (keyCode == '1') {
-    state = "lines";
+    //state = "lines";
   }
   else if (keyCode == '2') {
     state = "simple_image";
   }
   else if (keyCode == '3') {
     state = "detailed_image";
+  } else if(keyCode == 'b' || keyCode == 'B'){
+    state = "blackandwhite";
+  } else if(keyCode == 'g' || keyCode == 'G'){
+    state = "greyscale";
   }
 }
 
+// void mouseClicked(){
+//   println("Mouse clicked", mouseX, mouseY);
+  
+//   int loc = mouseY + mouseX * bark_BAW.width;
+//   float r = red(bark_BAW.pixels[loc]);
+//   float g = green(bark_BAW.pixels[loc]);
+//   float b = blue(bark_BAW.pixels[loc]);
+
+//   println("loc: ", loc, " rgb:", r,g,b);
+  
+// }
+
+// void mouseMoved(){
+//   if(renderingForce){
+//     println("Mouse loc", mouseX, mouseY);
+
+//     int loc = mouseY + mouseX * bark_BAW.width;
+//     float r = red(bark_BAW.pixels[loc]);
+//     float g = green(bark_BAW.pixels[loc]);
+//     float b = blue(bark_BAW.pixels[loc]);
+
+//     println("loc: ", loc, " rgb:", r,g,b);
+//   }
+// }
 
 /* end helper functions section ****************************************************************************************/
 
