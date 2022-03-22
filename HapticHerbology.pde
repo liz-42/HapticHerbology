@@ -39,7 +39,7 @@ boolean           renderingForce                     = false;
 
 
 /* framerate definition ************************************************************************************************/
-long              baseFrameRate                       = 120;
+long              baseFrameRate                       = 180;
 /* end framerate definition ********************************************************************************************/ 
 
 
@@ -413,11 +413,21 @@ class SimulationThread implements Runnable{
       fWall.set(0, 0);
       
       
-      float force_offset = 0; // to account for weakness when the end effector is perpendicular to the motors
-      if ((posEE.x < -0.006 || posEE.x > 0.012) && posEE.y < 0.1) {
-        force_offset = 0.02;
+      //println(posEE.x, posEE.y);
+      
+      float force_offset = 0.005 + posEE.x*1.8; // to account for weakness when the end effector is perpendicular to the motors
+      //if ((posEE.x < -0.006 || (posEE.x > 0.012 && posEE.x < 0.02))) {
+      //  force_offset = 0.02;
+      //}
+      if (( posEE.x < 0.02)) {
+        force_offset = force_offset + 0.01;
       }
-      float height_offset = (posEE.y + rEE); // to account for the difference in force close and far from the motors
+      float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+      // adjustments to height offset
+      if (posEE.y < 0.03) {
+        height_offset = height_offset + 0.05;
+      }
 
       penWall.set(1/(height_offset + force_offset), 0);
       
@@ -564,9 +574,9 @@ PVector calculate_line_force(float[] offsets, PVector pen_wall) {
   if (offsets[0] < 49 && offsets[1] < 6 && offsets[2] > 33 && offsets[3] > -6) {
     //println("yes");
     // make sure the force is applied outward from the wall, whatever side we're on
-    float wallForce = hWall; 
+    float wallForce = -hWall; 
     if (offsets[2] < 40) {
-      wallForce = -hWall;
+      wallForce = hWall;
     }
       force = force.add(pen_wall.mult(wallForce));
   }
@@ -635,9 +645,9 @@ void update_animation(float th1, float th2, float xE, float yE){
   
   
   // show the auto generated lines
-  for(int i=0; i < allLines.size(); i++) {
-      shape(allLines.get(i));
-  }
+  //for(int i=0; i < allLines.size(); i++) {
+  //    shape(allLines.get(i));
+  //}
   
      translate(xE, yE);
      shape(endEffector);
