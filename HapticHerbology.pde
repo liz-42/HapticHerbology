@@ -82,8 +82,8 @@ Float[] posHorLine9 = {-0.037, 0.12, 0.033, 0.12};
 Float[] posHorLine10 = {-0.037, 0.13, 0.033, 0.13};
 Float[] posHorLine11 = {-0.037, 0.14, 0.033, 0.14};
 
-Float[][] allHorLinePositions = {posHorLine1, posHorLine2, posHorLine3, posHorLine4, posHorLine5, posHorLine6, posHorLine7, posHorLine8,
-                                 posHorLine9, posHorLine10, posHorLine11};
+//Float[][] allHorLinePositions = {posHorLine1, posHorLine2, posHorLine3, posHorLine4, posHorLine5, posHorLine6, posHorLine7, posHorLine8,
+//                                 posHorLine9, posHorLine10, posHorLine11};
 
 
 /* generic data for a 2DOF device */
@@ -115,9 +115,9 @@ ArrayList<PShape> allLines = new ArrayList<PShape>();
                      
 
 // horizontal lines
-PShape horLine1, horLine2, horLine3, horLine4, horLine5, horLine6, horLine7, horLine8, horLine9, horLine10, horLine11;
+//PShape horLine1, horLine2, horLine3, horLine4, horLine5, horLine6, horLine7, horLine8, horLine9, horLine10, horLine11;
 
-PShape[] allHorLines = {horLine1, horLine2, horLine3, horLine4, horLine5, horLine6, horLine7, horLine8, horLine9, horLine10, horLine11};
+//PShape[] allHorLines = {horLine1, horLine2, horLine3, horLine4, horLine5, horLine6, horLine7, horLine8, horLine9, horLine10, horLine11};
 
 // background and other image
 PImage bark_template;
@@ -202,7 +202,7 @@ void setup(){
    //create_line_graphics(allLines, allLinePositions);
   
    // create line graphics for horizontal lines
-   create_hor_line_graphics(allHorLines, allHorLinePositions);
+   //create_hor_line_graphics(allHorLines, allHorLinePositions);
 
   // load images
   // bark_template = loadImage("oak_bark_black_and_white.jpg");
@@ -281,7 +281,7 @@ void setup(){
   int lines = 0;
   
   for (int i = 0; i < right_image.width; i++) {
-    println("line", i);
+    //println("line", i);
     for (int j = 0; j < right_image.height; j++) {
       float pixel = red(right_image.pixels[i + j * right_image.width]);
 
@@ -296,6 +296,7 @@ void setup(){
           lines++;
           Integer[] curLinePos = {right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1};
           PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
+          //println(curLinePos);
           temp.setStroke(color(0,0,150));
           
           // add to list
@@ -307,10 +308,27 @@ void setup(){
       }
     
     }
-    println("lines :", lines);
+    //println("lines :", lines);
     black = 0;
     lines = 0;
-  }
+   }
+   
+   // for testing 
+    //ArrayList<PShape> tempList = new ArrayList<PShape>();
+    //tempList.add(allLines.get(0));
+    //tempList.add(allLines.get(200));
+    //tempList.add(allLines.get(400));
+    
+    //allLines = tempList;
+    
+    
+    //ArrayList<Integer[]> tempList2 = new ArrayList<Integer[]>();
+    //tempList2.add(allLinePositions.get(0));
+    //tempList2.add(allLinePositions.get(200));
+    //tempList2.add(allLinePositions.get(400));
+    //allLinePositions = tempList2;
+    
+    //println(allLinePositions.get(0));
 
 
   // noStroke();
@@ -407,14 +425,16 @@ class SimulationThread implements Runnable{
       
       for (int i=0; i < allLinePositions.size(); i++) {
         // x1 offset
-        line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - posEE.x;
+        line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
         // y1 offset
-        line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - posEE.y; 
+        line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y*4000.0); 
         // x2 offset
-        line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - posEE.x;
+        line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x*4000.0 + right_image.width);
         // y2 offset
-        line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - posEE.y; 
+        line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y*4000.0); 
       }
+      
+      
       
       
       PVector[] lineForces = new PVector[allLinePositions.size()];
@@ -434,31 +454,31 @@ class SimulationThread implements Runnable{
       // horizontal lines
       penWall.set(0, 10);
       
-      float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.length][4];
+      //float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.length][4];
       
-      for (int i=0; i < allHorLinePositions.length; i++) {
-        // x1 offset
-        hor_line_endeffector_offsets[i][0] = allHorLinePositions[i][0] - posEE.x;
-        // y1 offset
-        hor_line_endeffector_offsets[i][1] = allHorLinePositions[i][1] - posEE.y; 
-        // x2 offset
-        hor_line_endeffector_offsets[i][2] = allHorLinePositions[i][2] - posEE.x;
-        // y2 offset
-        hor_line_endeffector_offsets[i][3] = allHorLinePositions[i][3] - posEE.y; 
-      }
+      //for (int i=0; i < allHorLinePositions.length; i++) {
+      //  // x1 offset
+      //  hor_line_endeffector_offsets[i][0] = allHorLinePositions[i][0] - posEE.x;
+      //  // y1 offset
+      //  hor_line_endeffector_offsets[i][1] = allHorLinePositions[i][1] - posEE.y; 
+      //  // x2 offset
+      //  hor_line_endeffector_offsets[i][2] = allHorLinePositions[i][2] - posEE.x;
+      //  // y2 offset
+      //  hor_line_endeffector_offsets[i][3] = allHorLinePositions[i][3] - posEE.y; 
+      //}
       
       
-      PVector[] horLineForces = new PVector[allHorLinePositions.length];
-      for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
-        horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall);
-      }
+      //PVector[] horLineForces = new PVector[allHorLinePositions.length];
+      //for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
+      //  horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall);
+      //}
       
-      // ensure horizontal force is off when crossing vertical lines
-      for (int i=0; i < horLineForces.length; i++) {
-        if (fWall.x == 0) {
-          fWall.add(horLineForces[i]);
-        }
-      }
+      //// ensure horizontal force is off when crossing vertical lines
+      //for (int i=0; i < horLineForces.length; i++) {
+      //  if (fWall.x == 0) {
+      //    fWall.add(horLineForces[i]);
+      //  }
+      //}
       
       
       fEE = (fWall.copy()).mult(-1);
@@ -538,14 +558,21 @@ void create_pantagraph(){
 
 PVector calculate_line_force(float[] offsets, PVector pen_wall) {
   PVector force = new PVector(0,0);
-  if (offsets[0] < 0.002 && offsets[1] < 0.002 && offsets[2] > -0.002 && offsets[3] > -0.002) {
+  //println(offsets);
+  Float[] test = {offsets[0] - Math.round(offsets[0]), offsets[1] - Math.round(offsets[1]), offsets[2] - Math.round(offsets[2]), offsets[3] - Math.round(offsets[3])}; 
+  //println(test);
+  if (offsets[0] < 49 && offsets[1] < 6 && offsets[2] > 33 && offsets[3] > -6) {
+    //println("yes");
     // make sure the force is applied outward from the wall, whatever side we're on
     float wallForce = hWall; 
-    if (offsets[2] < -0.001) {
+    if (offsets[2] < 40) {
       wallForce = -hWall;
     }
       force = force.add(pen_wall.mult(wallForce));
   }
+  //else {
+  //  println(offsets);
+  //}
   return force;
 }
 
