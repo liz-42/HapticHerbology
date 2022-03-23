@@ -134,6 +134,11 @@ PImage right_image;
 int right_image_margin_x = left_image_margin_x + 40;
 int right_image_margin_y = left_image_margin_y;
 
+// colour versions
+PImage left_image_colour;
+PImage right_image_colour;
+
+
 PShape[] right_image_lines = {};
 
 
@@ -214,10 +219,18 @@ void setup(){
   right_image.filter(THRESHOLD);
   // temp_image = createImage(left_image.width, left_image.height, RGB);
   // right_image = createImage(left_image.width, left_image.height, RGB);
+  
+  // colour version - left image
+  left_image_colour = loadImage("oak_bark.jpg");
+  
+  // original images
   right_image_margin_x += left_image.width;
 
   image(left_image, left_image_margin_x, left_image_margin_y);
   image(right_image, right_image_margin_x, right_image_margin_y);
+  
+  // colour version - right image
+  right_image_colour = loadImage("oak_bark.jpg");
 
   left_image.loadPixels();
   // temp_image.loadPixels();
@@ -368,9 +381,33 @@ void draw(){
     update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
   }
 
-  // Equivalent to MouseMoved()
+  //// Equivalent to MouseMoved()
+  //if(renderingForce){
+  //  newPos = new PVector(mouseX - left_image_margin_x, mouseY - left_image_margin_y);
+  //  println(mouseX, mouseY);
+    
+  //  if(newPos.x != posCursor.x || newPos.y != posCursor.y){
+  //    // Inside left image
+  //    if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
+  //      // println("Mouse loc", mouseX, mouseY);
+
+  //      float loc = newPos.x + newPos.y * left_image.width;
+  //      float r = red(left_image.pixels[int(loc)]);
+  //      float g = green(left_image.pixels[int(loc)]);
+  //      float b = blue(left_image.pixels[int(loc)]);
+
+  //      println("loc: ", loc, " rgb:", r,g,b);
+  //    }
+  //    posCursor = newPos;
+  //  }
+  //}
+  
+  // Version with end effector
   if(renderingForce){
-    newPos = new PVector(mouseX - left_image_margin_x, mouseY - left_image_margin_y);
+    // convert end effector position into new coordinate space
+    float translated_x_pos = posEE.x*pixelsPerMeter + (left_image_margin_x*2) + left_image.width;
+    float translated_y_pos = posEE.y*pixelsPerMeter;
+    newPos = new PVector(translated_x_pos - left_image_margin_x, translated_y_pos - left_image_margin_y);
     
     if(newPos.x != posCursor.x || newPos.y != posCursor.y){
       // Inside left image
@@ -382,7 +419,7 @@ void draw(){
         float g = green(left_image.pixels[int(loc)]);
         float b = blue(left_image.pixels[int(loc)]);
 
-        // println("loc: ", loc, " rgb:", r,g,b);
+        println("loc: ", loc, " rgb:", r,g,b);
       }
       posCursor = newPos;
     }
@@ -606,14 +643,20 @@ void update_animation(float th1, float th2, float xE, float yE){
     //for(int i=0; i < allLines.length; i++) {
     //  shape(allLines[i]);
     //}
+    image(left_image, left_image_margin_x, left_image_margin_y);
+    image(right_image, right_image_margin_x, right_image_margin_y);
   }
   else if (state == "simple_image") {
     //image(bark_template, 350, 150);
     // background(bark_template);
+    image(left_image, left_image_margin_x, left_image_margin_y);
+    image(right_image, right_image_margin_x, right_image_margin_y);
   }
   else if (state == "detailed_image") {
     // background(bark_detailed);
     //image(bark_detailed, 350, 150);
+    image(right_image_colour, right_image_margin_x, right_image_margin_y);
+    image(left_image_colour, left_image_margin_x, left_image_margin_y);
   } else if (state == "blackandwhite"){
     // background(bark_BAW);
   } else if (state == "greyscale"){
@@ -628,8 +671,8 @@ void update_animation(float th1, float th2, float xE, float yE){
     
     
   // draw background images 
-  image(left_image, left_image_margin_x, left_image_margin_y);
-  image(right_image, right_image_margin_x, right_image_margin_y);
+  //image(left_image, left_image_margin_x, left_image_margin_y);
+  //image(right_image, right_image_margin_x, right_image_margin_y);
 
   //left_image.loadPixels();
   //// temp_image.loadPixels();
