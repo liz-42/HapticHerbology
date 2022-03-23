@@ -402,28 +402,32 @@ void draw(){
   //  }
   //}
   
-  // Version with end effector
-  if(renderingForce){
-    // convert end effector position into new coordinate space
-    float translated_x_pos = posEE.x*pixelsPerMeter + (left_image_margin_x*2) + left_image.width;
-    float translated_y_pos = posEE.y*pixelsPerMeter;
-    newPos = new PVector(translated_x_pos - left_image_margin_x, translated_y_pos - left_image_margin_y);
+  //// Version with end effector
+  //if(renderingForce){
+  //  // convert end effector position into new coordinate space
+  //  float translated_x_pos = posEE.x*pixelsPerMeter + (left_image_margin_x*2) + left_image.width;
+  //  float translated_y_pos = posEE.y*pixelsPerMeter;
+  //  newPos = new PVector(translated_x_pos - left_image_margin_x, translated_y_pos - left_image_margin_y);
     
-    if(newPos.x != posCursor.x || newPos.y != posCursor.y){
-      // Inside left image
-      if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
-        // println("Mouse loc", mouseX, mouseY);
+  //  if(newPos.x != posCursor.x || newPos.y != posCursor.y){
+  //    // Inside left image
+  //    if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
+  //      // println("Mouse loc", mouseX, mouseY);
 
-        float loc = newPos.x + newPos.y * left_image.width;
-        float r = red(left_image.pixels[int(loc)]);
-        float g = green(left_image.pixels[int(loc)]);
-        float b = blue(left_image.pixels[int(loc)]);
+  //      float loc = newPos.x + newPos.y * left_image.width;
+  //      float r = red(left_image.pixels[int(loc)]);
+  //      float g = green(left_image.pixels[int(loc)]);
+  //      float b = blue(left_image.pixels[int(loc)]);
 
-        println("loc: ", loc, " rgb:", r,g,b);
-      }
-      posCursor = newPos;
-    }
-  }
+  //      //println("loc: ", loc, " rgb:", r,g,b);
+        
+  //      if (r < 1) {
+  //        colour_force();
+  //      }
+  //    }
+  //    posCursor = newPos;
+  //  }
+  //}
 }
 /* end draw section ****************************************************************************************************/
 
@@ -527,10 +531,48 @@ class SimulationThread implements Runnable{
       //  }
       //}
       
+      // version with colours, not lines
+      PVector result = new PVector(0,0);
+      // Version with end effector
+    // convert end effector position into new coordinate space
+    float translated_x_pos = posEE.x*pixelsPerMeter + (left_image_margin_x*2) + left_image.width;
+    float translated_y_pos = posEE.y*pixelsPerMeter;
+    newPos = new PVector(translated_x_pos - left_image_margin_x, translated_y_pos - left_image_margin_y);
+    
+    if(newPos.x != posCursor.x || newPos.y != posCursor.y){
+      // Inside left image
+      if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
+        // println("Mouse loc", mouseX, mouseY);
+
+        float loc = newPos.x + newPos.y * left_image.width;
+        float r = red(left_image.pixels[int(loc)]);
+        float g = green(left_image.pixels[int(loc)]);
+        float b = blue(left_image.pixels[int(loc)]);
+
+        //println("loc: ", loc, " rgb:", r,g,b);
+        
+        float prev = posCursor.x + posCursor.y * left_image.width;
+        float r_prev = red(left_image.pixels[int(prev)]);
+        float g_prev = green(left_image.pixels[int(prev)]);
+        float b_prev = blue(left_image.pixels[int(prev)]);
+        
+        if (r < 1 && r_prev < 1) {
+          result = colour_force();
+        }
+      }
+      posCursor = newPos;
+    }
+    
+    fWall.add(result);
+      
+      
+      
       
       fEE = (fWall.copy()).mult(-1);
       fEE.set(graphics_to_device(fEE));
       /* end haptic wall force calculation */
+     
+      
     }
     
     
@@ -546,6 +588,48 @@ class SimulationThread implements Runnable{
 
 
 /* helper functions section, place helper functions here ***************************************************************/
+
+PVector colour_force() {
+  PVector force = new PVector(0,0);
+  if(haplyBoard.data_available()){
+      /* GET END-EFFECTOR STATE (TASK SPACE) */
+      widgetOne.device_read_data();
+    
+      angles.set(widgetOne.get_device_angles()); 
+      posEE.set(widgetOne.get_device_position(angles.array()));
+      posEE.set(device_to_graphics(posEE)); 
+      
+      
+      /* haptic wall force calculation */
+      fWall.set(0, 0);
+      
+      
+      float force_offset = 0.005 + posEE.x*1.8; // to account for weakness when the end effector is perpendicular to the motors
+      //if ((posEE.x < -0.006 || (posEE.x > 0.012 && posEE.x < 0.02))) {
+      //  force_offset = 0.02;
+      //}
+      if (( posEE.x < 0.02)) {
+        force_offset = force_offset + 0.01;
+      }
+      float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+      // adjustments to height offset
+      if (posEE.y < 0.03) {
+        height_offset = height_offset + 0.05;
+      }
+
+      penWall.set(1/(height_offset + force_offset), 0);
+      
+      force.add(penWall.mult(hWall));
+      
+      //println(force);
+      
+  }
+  return force;
+  
+}
+
+
 
 void create_line_graphics(PShape[] shapes, Float[][] positions) {
   for(int i=0; i < shapes.length; i++) {
