@@ -65,8 +65,10 @@ float             hWall2                              = 0.005;
 PVector           fWall                               = new PVector(0, 0);
 PVector           penWall                             = new PVector(0, 0);
 
-
+// for right image
 ArrayList<Integer[]> allLinePositions = new ArrayList<Integer[]>();
+// for left image
+ArrayList<Integer[]> allLinePositions_left = new ArrayList<Integer[]>();
                               
                               
 // horizontal lines for up and down texture
@@ -112,6 +114,10 @@ PShape pGraph, joint, endEffector;
 
 // all lines
 ArrayList<PShape> allLines = new ArrayList<PShape>();
+
+// lines for left image
+ArrayList<PShape> allLines_left = new ArrayList<PShape>();
+
                      
 
 // horizontal lines
@@ -215,9 +221,6 @@ void setup(){
   // bark_template = loadImage("oak_bark_black_and_white.jpg");
   left_image = loadImage("oak_bark.jpg");
   left_image.filter(THRESHOLD);
-  left_image.filter(DILATE);
-  left_image.filter(DILATE);
-  left_image.filter(DILATE);
   right_image = loadImage("oak_bark.jpg");
   right_image.filter(THRESHOLD);
   // temp_image = createImage(left_image.width, left_image.height, RGB);
@@ -247,51 +250,10 @@ void setup(){
   text("This image tracks position", left_image_margin_x, left_image_margin_y + left_image.height + 40);
   text("This image has pre-lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
   
-  // for (int y = 1; y < left_image.height-1; y++) { // Skip top and bottom edges
-  //   for (int x = 1; x < left_image.width-1; x++) { // Skip left and right edges
-  //     float sum = 0; // Kernel sum for this pixel
-  //     for (int ky = -1; ky <= 1; ky++) {
-  //       for (int kx = -1; kx <= 1; kx++) {
-  //         // Calculate the adjacent pixel for this kernel point
-  //         int pos = (y + ky)*left_image.width + (x + kx);
-  //         // Image is grayscale, red/green/blue are identical
-  //         float val = red(left_image.pixels[pos]);
-  //         // Multiply adjacent pixels based on the kernel values
-  //         sum += kernel[ky+1][kx+1] * val;
-  //       }
-  //     }
-  //     // For this pixel in the new image, set the gray value
-  //     // based on the sum from the kernel
-  //     temp_image.pixels[y*left_image.width + x] = color(sum, sum, sum);
-  //   }
-  // }
-
-
-  // for (int y = 1; y < temp_image.height-1; y++) {   // Skip top and bottom edges
-  //     for (int x = 1; x < temp_image.width-1; x++) {  // Skip left and right edges
-  //       float sum = 0; // Kernel sum for this pixel
-  //       for (int ky = -1; ky <= 1; ky++) {
-  //         for (int kx = -1; kx <= 1; kx++) {
-  //           // Calculate the adjacent pixel for this kernel point
-  //           int pos = (y + ky)*temp_image.width + (x + kx);
-  //           // Image is grayscale, red/green/blue are identical
-  //           float val = red(temp_image.pixels[pos]);
-  //           // Multiply adjacent pixels based on the kernel values
-  //           sum += kernel_blur[ky+1][kx+1] * val;
-  //         }
-  //       }
-  //       // For this pixel in the new image, set the gray value
-  //       // based on the sum from the kernel
-  //       right_image.pixels[y*temp_image.width + x] = color(sum);
-  //     }
-  //   }
-
-  // right_image.updatePixels();
-  // image(right_image, right_image_margin_x, right_image_margin_y);
 
   // Read image vertically
   // Create lines accordingly
-  // right_image_lines = [];
+  // right image
   int black = 0;
   int startJ = 0;
   int lines = 0;
@@ -329,6 +291,46 @@ void setup(){
     lines = 0;
    }
    
+   // left image
+   black = 0;
+   startJ = 0;
+   lines = 0;
+  
+   for (int i = 0; i < left_image.width; i++) {
+     //println("line", i);
+     for (int j = 0; j < left_image.height; j++) {
+       float pixel = red(left_image.pixels[i + j * left_image.width]);
+
+       if(pixel < 10){
+         if(black == 0){
+           startJ = j;
+         }
+         black++;
+       }
+       if(pixel >= 5 || j == left_image.height-1){
+         if(black >= 10){
+           lines++;
+           Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
+           PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
+           //println(curLinePos);
+           temp.setStroke(color(0,0,150));
+          
+           // add to list
+           allLinePositions_left.add(curLinePos);
+           allLines_left.add(temp);
+           //shape(temp);
+         }
+           black = 0;
+       }
+    
+     }
+     //println("lines :", lines);
+     black = 0;
+     lines = 0;
+   }
+   
+   
+   
    // for testing 
     //ArrayList<PShape> tempList = new ArrayList<PShape>();
     //tempList.add(allLines.get(0));
@@ -347,25 +349,6 @@ void setup(){
     //println(allLinePositions.get(0));
 
 
-  // noStroke();
-  
-  // fill(0,0,255);
-  // beginShape();
-  // // Create lines in the right_image
-  // for (int i = 0; i < right_image.width; ++i) {
-  //   for (int j = 0; j < right_image.height; ++j) {
-  //     int loc = i + j * right_image.width;
-  //     float r = red(right_image.pixels[loc]);
-  //     float g = green(right_image.pixels[loc]);
-  //     float b = blue(right_image.pixels[loc]);
-
-  //     if ((r + g + b) / 3 < 1) {
-  //       vertex(i + right_image_margin_x, j + right_image_margin_y);
-  //     }
-  //   }
-  // }
-  // endShape(CLOSE);
-
   /* setup framerate speed */
   frameRate(baseFrameRate);
   
@@ -383,54 +366,6 @@ void draw(){
     // background(152,190,100);
     update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
   }
-
-  //// Equivalent to MouseMoved()
-  //if(renderingForce){
-  //  newPos = new PVector(mouseX - left_image_margin_x, mouseY - left_image_margin_y);
-  //  println(mouseX, mouseY);
-    
-  //  if(newPos.x != posCursor.x || newPos.y != posCursor.y){
-  //    // Inside left image
-  //    if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
-  //      // println("Mouse loc", mouseX, mouseY);
-
-  //      float loc = newPos.x + newPos.y * left_image.width;
-  //      float r = red(left_image.pixels[int(loc)]);
-  //      float g = green(left_image.pixels[int(loc)]);
-  //      float b = blue(left_image.pixels[int(loc)]);
-
-  //      println("loc: ", loc, " rgb:", r,g,b);
-  //    }
-  //    posCursor = newPos;
-  //  }
-  //}
-  
-  //// Version with end effector
-  //if(renderingForce){
-  //  // convert end effector position into new coordinate space
-  //  float translated_x_pos = posEE.x*pixelsPerMeter + (left_image_margin_x*2) + left_image.width;
-  //  float translated_y_pos = posEE.y*pixelsPerMeter;
-  //  newPos = new PVector(translated_x_pos - left_image_margin_x, translated_y_pos - left_image_margin_y);
-    
-  //  if(newPos.x != posCursor.x || newPos.y != posCursor.y){
-  //    // Inside left image
-  //    if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
-  //      // println("Mouse loc", mouseX, mouseY);
-
-  //      float loc = newPos.x + newPos.y * left_image.width;
-  //      float r = red(left_image.pixels[int(loc)]);
-  //      float g = green(left_image.pixels[int(loc)]);
-  //      float b = blue(left_image.pixels[int(loc)]);
-
-  //      //println("loc: ", loc, " rgb:", r,g,b);
-        
-  //      if (r < 1) {
-  //        colour_force();
-  //      }
-  //    }
-  //    posCursor = newPos;
-  //  }
-  //}
 }
 /* end draw section ****************************************************************************************************/
 
@@ -459,12 +394,20 @@ class SimulationThread implements Runnable{
       
       //println(posEE.x, posEE.y);
       
-      float force_offset = 0.005 + posEE.x*1.8; // to account for weakness when the end effector is perpendicular to the motors
+      float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
       //if ((posEE.x < -0.006 || (posEE.x > 0.012 && posEE.x < 0.02))) {
       //  force_offset = 0.02;
       //}
-      if (( posEE.x < 0.02)) {
+      if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
         force_offset = force_offset + 0.01;
+      }
+      else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+        println("test");
+        force_offset = force_offset + 0.0001;
+      }
+      else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y > 0.05){
+        println("I'm here");
+        force_offset = force_offset + 0.02;
       }
       float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
       
@@ -475,34 +418,74 @@ class SimulationThread implements Runnable{
 
       penWall.set(1/(height_offset + force_offset), 0);
       
-      float[][] line_endeffector_offsets = new float[allLinePositions.size()][4];
       
-      for (int i=0; i < allLinePositions.size(); i++) {
-        // x1 offset
-        line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
-        // y1 offset
-        line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y*4000.0); 
-        // x2 offset
-        line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x*4000.0 + right_image.width);
-        // y2 offset
-        line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y*4000.0); 
-      }
+      // no need to calculate everything at once - it introduces lag
+      
+      if (posEE.x > 0) { // right image
       
       
+        float[][] line_endeffector_offsets = new float[allLinePositions.size()][4];
       
-      
-      PVector[] lineForces = new PVector[allLinePositions.size()];
-      for (int i=0; i < line_endeffector_offsets.length; i++) {
-        lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall);
-      }
-      
-      
-      // ensure only one vertical line can enact force upon the end effector at once
-      for (int i=0; i < lineForces.length; i++) {
-        if (lineForces[i].x != 0 || lineForces[i].y != 0) {
-          fWall.add(lineForces[i]);
-          break;
+        for (int i=0; i < allLinePositions.size(); i++) {
+          // x1 offset
+          line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
+          // y1 offset
+          line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y*4000.0); 
+          // x2 offset
+          line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x*4000.0 + right_image.width);
+          // y2 offset
+          line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y*4000.0); 
         }
+      
+      
+      
+      
+        PVector[] lineForces = new PVector[allLinePositions.size()];
+        for (int i=0; i < line_endeffector_offsets.length; i++) {
+          lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall);
+        }
+      
+      
+        // ensure only one vertical line can enact force upon the end effector at once
+        for (int i=0; i < lineForces.length; i++) {
+          if (lineForces[i].x != 0 || lineForces[i].y != 0) {
+            fWall.add(lineForces[i]);
+            break;
+          }
+        }
+      }
+      else { // left image
+      
+        float[][] line_endeffector_offsets_left = new float[allLinePositions_left.size()][4];
+      
+        for (int i=0; i < allLinePositions_left.size(); i++) {
+          // x1 offset
+          line_endeffector_offsets_left[i][0] = allLinePositions_left.get(i)[0] - (posEE.x*4000.0 + left_image.width);
+          // y1 offset
+          line_endeffector_offsets_left[i][1] = allLinePositions_left.get(i)[1] - (posEE.y*4000.0); 
+          // x2 offset
+          line_endeffector_offsets_left[i][2] = allLinePositions_left.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+          // y2 offset
+          line_endeffector_offsets_left[i][3] = allLinePositions_left.get(i)[3] - (posEE.y*4000.0); 
+        }
+      
+      
+      
+      
+        PVector[] lineForces_left = new PVector[allLinePositions_left.size()];
+        for (int i=0; i < line_endeffector_offsets_left.length; i++) {
+          lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall);
+        }
+      
+      
+        // ensure only one vertical line can enact force upon the end effector at once
+        for (int i=0; i < lineForces_left.length; i++) {
+          if (lineForces_left[i].x != 0 || lineForces_left[i].y != 0) {
+            fWall.add(lineForces_left[i]);
+            break;
+          }
+        }
+      
       }
       
       // horizontal lines
@@ -533,66 +516,7 @@ class SimulationThread implements Runnable{
       //    fWall.add(horLineForces[i]);
       //  }
       //}
-      
-      /********************************************************************************/
-      // version with colours, not lines
-      PVector result = new PVector(0,0);
-      // Version with end effector
-    // convert end effector position into new coordinate space
-    float translated_x_pos = posEE.x*pixelsPerMeter + (left_image_margin_x*2) + left_image.width;
-    float translated_y_pos = posEE.y*pixelsPerMeter;
-    newPos = new PVector(translated_x_pos - left_image_margin_x, translated_y_pos - left_image_margin_y);
-    
-    if(newPos.x != posCursor.x || newPos.y != posCursor.y){
-      // Inside left image
-      if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
-        // println("Mouse loc", mouseX, mouseY);
-
-        float loc = newPos.x + newPos.y * left_image.width;
-        float r = red(left_image.pixels[int(loc)]);
-        float g = green(left_image.pixels[int(loc)]);
-        float b = blue(left_image.pixels[int(loc)]);
-
-        println("loc: ", loc, " rgb:", r,g,b);
-        
-        float prev_right = (newPos.x+1) + (newPos.y) * left_image.width;
-        float prev_colour_right = red(left_image.pixels[int(prev_right)]);
-        
-        float prev_left = (newPos.x-1) + (newPos.y) * left_image.width;
-        float prev_colour_left = red(left_image.pixels[int(prev_left)]);
-        
-        float prev_right2 = (newPos.x+2) + (newPos.y) * left_image.width;
-        float prev_colour_right2 = red(left_image.pixels[int(prev_right2)]);
-        
-        float prev_left2 = (newPos.x-2) + (newPos.y) * left_image.width;
-        float prev_colour_left2 = red(left_image.pixels[int(prev_left2)]);
-        
-        
-        
-        //println(loc, prev_right, prev_left);
-        
-        float end_effector_direction = newPos.x - posCursor.x;
-        
-        
-        if ((r < 1 && prev_colour_right < 1 && prev_colour_right2 < 1) || (r < 1 && prev_colour_left < 1 && prev_colour_left2 < 1)) {
-          //print(loc, prev);
-          
-          if (end_effector_direction > 0) {
-            result = colour_force(-1);
-          }
-          else {
-            result = colour_force(1);
-          }
-        }
-      }
-      posCursor = newPos;
-    }
-    
-    fWall.add(result);
-      
-      
-      
-      
+   
       fEE = (fWall.copy()).mult(-1);
       fEE.set(graphics_to_device(fEE));
       /* end haptic wall force calculation */
@@ -791,15 +715,18 @@ void update_animation(float th1, float th2, float xE, float yE){
   text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
   text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
 
-  textSize(24);
-  text("This image tracks position", left_image_margin_x, left_image_margin_y + left_image.height + 40);
-  text("This image has pre-lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
+  textSize(20);
+  text("This image will have a gradient", left_image_margin_x, left_image_margin_y + left_image.height + 40);
+  text("This image has simple lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
   
   
   // show the auto generated lines
-  //for(int i=0; i < allLines.size(); i++) {
-  //    shape(allLines.get(i));
-  //}
+  for(int i=0; i < allLines.size(); i++) {
+      shape(allLines.get(i));
+  }
+  for(int i=0; i < allLines.size(); i++) {
+      shape(allLines_left.get(i));
+  }
   
      translate(xE, yE);
      shape(endEffector);
