@@ -215,6 +215,9 @@ void setup(){
   // bark_template = loadImage("oak_bark_black_and_white.jpg");
   left_image = loadImage("oak_bark.jpg");
   left_image.filter(THRESHOLD);
+  left_image.filter(DILATE);
+  left_image.filter(DILATE);
+  left_image.filter(DILATE);
   right_image = loadImage("oak_bark.jpg");
   right_image.filter(THRESHOLD);
   // temp_image = createImage(left_image.width, left_image.height, RGB);
@@ -531,6 +534,7 @@ class SimulationThread implements Runnable{
       //  }
       //}
       
+      /********************************************************************************/
       // version with colours, not lines
       PVector result = new PVector(0,0);
       // Version with end effector
@@ -549,15 +553,36 @@ class SimulationThread implements Runnable{
         float g = green(left_image.pixels[int(loc)]);
         float b = blue(left_image.pixels[int(loc)]);
 
-        //println("loc: ", loc, " rgb:", r,g,b);
+        println("loc: ", loc, " rgb:", r,g,b);
         
-        float prev = posCursor.x + posCursor.y * left_image.width;
-        float r_prev = red(left_image.pixels[int(prev)]);
-        float g_prev = green(left_image.pixels[int(prev)]);
-        float b_prev = blue(left_image.pixels[int(prev)]);
+        float prev_right = (newPos.x+1) + (newPos.y) * left_image.width;
+        float prev_colour_right = red(left_image.pixels[int(prev_right)]);
         
-        if (r < 1 && r_prev < 1) {
-          result = colour_force();
+        float prev_left = (newPos.x-1) + (newPos.y) * left_image.width;
+        float prev_colour_left = red(left_image.pixels[int(prev_left)]);
+        
+        float prev_right2 = (newPos.x+2) + (newPos.y) * left_image.width;
+        float prev_colour_right2 = red(left_image.pixels[int(prev_right2)]);
+        
+        float prev_left2 = (newPos.x-2) + (newPos.y) * left_image.width;
+        float prev_colour_left2 = red(left_image.pixels[int(prev_left2)]);
+        
+        
+        
+        //println(loc, prev_right, prev_left);
+        
+        float end_effector_direction = newPos.x - posCursor.x;
+        
+        
+        if ((r < 1 && prev_colour_right < 1 && prev_colour_right2 < 1) || (r < 1 && prev_colour_left < 1 && prev_colour_left2 < 1)) {
+          //print(loc, prev);
+          
+          if (end_effector_direction > 0) {
+            result = colour_force(-1);
+          }
+          else {
+            result = colour_force(1);
+          }
         }
       }
       posCursor = newPos;
@@ -589,7 +614,7 @@ class SimulationThread implements Runnable{
 
 /* helper functions section, place helper functions here ***************************************************************/
 
-PVector colour_force() {
+PVector colour_force(int direction) {
   PVector force = new PVector(0,0);
   if(haplyBoard.data_available()){
       /* GET END-EFFECTOR STATE (TASK SPACE) */
@@ -618,9 +643,9 @@ PVector colour_force() {
         height_offset = height_offset + 0.05;
       }
 
-      penWall.set(1/(height_offset + force_offset), 0);
+      penWall.set(direction * 1/(height_offset + force_offset), 0);
       
-      force.add(penWall.mult(hWall));
+      force.add(penWall.mult(hWall/3));
       
       //println(force);
       
@@ -694,7 +719,7 @@ PVector calculate_line_force(float[] offsets, PVector pen_wall) {
   //println(test);
   if (offsets[0] < 49 && offsets[1] < 6 && offsets[2] > 33 && offsets[3] > -6) {
     //println("yes");
-    // make sure the force is applied outward from the wall, whatever side we're on
+    // make sure the force is applied inward towards the wall, whatever side we're on
     float wallForce = -hWall; 
     if (offsets[2] < 40) {
       wallForce = hWall;
