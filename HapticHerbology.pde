@@ -64,11 +64,14 @@ float             hWall                               = 0.015;
 float             hWall2                              = 0.005;
 PVector           fWall                               = new PVector(0, 0);
 PVector           penWall                             = new PVector(0, 0);
+// for grey lines
+PVector           penWallGrey                         = new PVector(0, 0);
 
 // for right image
 ArrayList<Integer[]> allLinePositions = new ArrayList<Integer[]>();
 // for left image
 ArrayList<Integer[]> allLinePositions_left = new ArrayList<Integer[]>();
+ArrayList<Integer[]> allLinePositions_left_grey = new ArrayList<Integer[]>();
                               
                               
 // horizontal lines for up and down texture
@@ -117,6 +120,8 @@ ArrayList<PShape> allLines = new ArrayList<PShape>();
 
 // lines for left image
 ArrayList<PShape> allLines_left = new ArrayList<PShape>();
+ArrayList<PShape> allLines_left_grey = new ArrayList<PShape>();
+
 
                      
 
@@ -308,7 +313,19 @@ void setup(){
          black++;
        }
        if(pixel >= 5 || j == left_image.height-1){
-         if(black >= 10){
+         
+         if ((black >= 3) && (black < 10)){
+           lines++;
+           Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
+           PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
+           //println(curLinePos);
+           temp.setStroke(color(0,150,150));
+          
+           // add to list
+           allLinePositions_left_grey.add(curLinePos);
+           allLines_left_grey.add(temp);
+         }
+         else if(black >= 10){
            lines++;
            Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
            PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
@@ -402,11 +419,9 @@ class SimulationThread implements Runnable{
         force_offset = force_offset + 0.01;
       }
       else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
-        println("test");
-        force_offset = force_offset + 0.0001;
+        force_offset = force_offset + 0.005;
       }
-      else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y > 0.05){
-        println("I'm here");
+      else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
         force_offset = force_offset + 0.02;
       }
       float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
@@ -442,7 +457,7 @@ class SimulationThread implements Runnable{
       
         PVector[] lineForces = new PVector[allLinePositions.size()];
         for (int i=0; i < line_endeffector_offsets.length; i++) {
-          lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall);
+          lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall, 1);
         }
       
       
@@ -455,6 +470,27 @@ class SimulationThread implements Runnable{
         }
       }
       else { // left image
+      
+      
+        // force offsets for grey lines
+        float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+          force_offset_grey = force_offset_grey + 0.01;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+          force_offset_grey = force_offset_grey + 0.02;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+          force_offset_grey = force_offset_grey + 0.03;
+        }
+        float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+        // adjustments to height offset
+        if (posEE.y < 0.03) {
+          height_offset_grey = height_offset_grey + 0.05;
+        }
+
+        penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
       
         float[][] line_endeffector_offsets_left = new float[allLinePositions_left.size()][4];
       
@@ -474,7 +510,7 @@ class SimulationThread implements Runnable{
       
         PVector[] lineForces_left = new PVector[allLinePositions_left.size()];
         for (int i=0; i < line_endeffector_offsets_left.length; i++) {
-          lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall);
+          lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall, -1);
         }
       
       
@@ -482,6 +518,37 @@ class SimulationThread implements Runnable{
         for (int i=0; i < lineForces_left.length; i++) {
           if (lineForces_left[i].x != 0 || lineForces_left[i].y != 0) {
             fWall.add(lineForces_left[i]);
+            break;
+          }
+        }
+        
+        
+        float[][] line_endeffector_offsets_left_grey = new float[allLinePositions_left_grey.size()][4];
+      
+        for (int i=0; i < allLinePositions_left_grey.size(); i++) {
+          // x1 offset
+          line_endeffector_offsets_left_grey[i][0] = allLinePositions_left_grey.get(i)[0] - (posEE.x*4000.0 + left_image.width);
+          // y1 offset
+          line_endeffector_offsets_left_grey[i][1] = allLinePositions_left_grey.get(i)[1] - (posEE.y*4000.0); 
+          // x2 offset
+          line_endeffector_offsets_left_grey[i][2] = allLinePositions_left_grey.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+          // y2 offset
+          line_endeffector_offsets_left_grey[i][3] = allLinePositions_left_grey.get(i)[3] - (posEE.y*4000.0); 
+        }
+      
+      
+      
+      
+        PVector[] lineForces_left_grey = new PVector[allLinePositions_left_grey.size()];
+        for (int i=0; i < line_endeffector_offsets_left_grey.length; i++) {
+          lineForces_left_grey[i] = calculate_line_force(line_endeffector_offsets_left_grey[i], penWallGrey, 1);
+        }
+      
+      
+        // ensure only one vertical line can enact force upon the end effector at once
+        for (int i=0; i < lineForces_left_grey.length; i++) {
+          if ((lineForces_left_grey[i].x != 0 || lineForces_left_grey[i].y != 0)) {
+            fWall.add(lineForces_left_grey[i]);
             break;
           }
         }
@@ -636,7 +703,7 @@ void create_pantagraph(){
   
 }
 
-PVector calculate_line_force(float[] offsets, PVector pen_wall) {
+PVector calculate_line_force(float[] offsets, PVector pen_wall, int direction) {
   PVector force = new PVector(0,0);
   //println(offsets);
   Float[] test = {offsets[0] - Math.round(offsets[0]), offsets[1] - Math.round(offsets[1]), offsets[2] - Math.round(offsets[2]), offsets[3] - Math.round(offsets[3])}; 
@@ -644,9 +711,9 @@ PVector calculate_line_force(float[] offsets, PVector pen_wall) {
   if (offsets[0] < 49 && offsets[1] < 6 && offsets[2] > 33 && offsets[3] > -6) {
     //println("yes");
     // make sure the force is applied inward towards the wall, whatever side we're on
-    float wallForce = -hWall; 
+    float wallForce = -hWall * direction; 
     if (offsets[2] < 40) {
-      wallForce = hWall;
+      wallForce = hWall * direction;
     }
       force = force.add(pen_wall.mult(wallForce));
   }
@@ -716,7 +783,7 @@ void update_animation(float th1, float th2, float xE, float yE){
   text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
 
   textSize(20);
-  text("This image will have a gradient", left_image_margin_x, left_image_margin_y + left_image.height + 40);
+  text("This image has a gradient", left_image_margin_x, left_image_margin_y + left_image.height + 40);
   text("This image has simple lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
   
   
@@ -724,8 +791,11 @@ void update_animation(float th1, float th2, float xE, float yE){
   for(int i=0; i < allLines.size(); i++) {
       shape(allLines.get(i));
   }
-  for(int i=0; i < allLines.size(); i++) {
+  for(int i=0; i < allLines_left.size(); i++) {
       shape(allLines_left.get(i));
+  }
+  for(int i=0; i < allLines_left_grey.size(); i++) {
+      shape(allLines_left_grey.get(i));
   }
   
      translate(xE, yE);
