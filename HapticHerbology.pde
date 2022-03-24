@@ -72,6 +72,9 @@ ArrayList<Integer[]> allLinePositions = new ArrayList<Integer[]>();
 // for left image
 ArrayList<Integer[]> allLinePositions_left = new ArrayList<Integer[]>();
 ArrayList<Integer[]> allLinePositions_left_grey = new ArrayList<Integer[]>();
+
+// for horizontal lines
+ArrayList<Integer[]> allHorLinePositions = new ArrayList<Integer[]>();
                               
                               
 // horizontal lines for up and down texture
@@ -121,6 +124,9 @@ ArrayList<PShape> allLines = new ArrayList<PShape>();
 // lines for left image
 ArrayList<PShape> allLines_left = new ArrayList<PShape>();
 ArrayList<PShape> allLines_left_grey = new ArrayList<PShape>();
+
+// horizontal lines
+ArrayList<PShape> allHorLines = new ArrayList<PShape>();
 
 
                      
@@ -346,6 +352,19 @@ void setup(){
      lines = 0;
    }
    
+   // create horizontal lines for right image
+   for (int j = 0; j < left_image.height; j=j+20) {
+     Integer[] curLinePos = {right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j};
+     PShape temp = createShape(LINE, right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j);
+     //println(curLinePos);
+     temp.setStroke(color(0,0,150));
+          
+     // add to list
+     allHorLinePositions.add(curLinePos);
+     allHorLines.add(temp);
+   }
+   
+   
    
    
    // for testing 
@@ -558,31 +577,31 @@ class SimulationThread implements Runnable{
       // horizontal lines
       penWall.set(0, 10);
       
-      //float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.length][4];
+      float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.size()][4];
       
-      //for (int i=0; i < allHorLinePositions.length; i++) {
-      //  // x1 offset
-      //  hor_line_endeffector_offsets[i][0] = allHorLinePositions[i][0] - posEE.x;
-      //  // y1 offset
-      //  hor_line_endeffector_offsets[i][1] = allHorLinePositions[i][1] - posEE.y; 
-      //  // x2 offset
-      //  hor_line_endeffector_offsets[i][2] = allHorLinePositions[i][2] - posEE.x;
-      //  // y2 offset
-      //  hor_line_endeffector_offsets[i][3] = allHorLinePositions[i][3] - posEE.y; 
-      //}
+      for (int i=0; i < allHorLinePositions.size(); i++) {
+        // x1 offset
+        hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
+        // y1 offset
+        hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
+        // x2 offset
+        hor_line_endeffector_offsets[i][2] = allHorLinePositions.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+        // y2 offset
+        hor_line_endeffector_offsets[i][3] = allHorLinePositions.get(i)[3] - (posEE.y*4000.0); 
+      }
       
       
-      //PVector[] horLineForces = new PVector[allHorLinePositions.length];
-      //for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
-      //  horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall);
-      //}
+      PVector[] horLineForces = new PVector[allHorLinePositions.size()];
+      for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
+        horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall, 1);
+      }
       
-      //// ensure horizontal force is off when crossing vertical lines
-      //for (int i=0; i < horLineForces.length; i++) {
-      //  if (fWall.x == 0) {
-      //    fWall.add(horLineForces[i]);
-      //  }
-      //}
+      // ensure horizontal force is off when crossing vertical lines
+      for (int i=0; i < horLineForces.length; i++) {
+        if (fWall.x == 0) {
+          fWall.add(horLineForces[i]);
+        }
+      }
    
       fEE = (fWall.copy()).mult(-1);
       fEE.set(graphics_to_device(fEE));
@@ -764,9 +783,9 @@ void update_animation(float th1, float th2, float xE, float yE){
   }
   
   
-    //for(int i=0; i < allHorLines.length; i++) {
-    //  shape(allHorLines[i]);
-    //}
+    for(int i=0; i < allHorLines.size(); i++) {
+      shape(allHorLines.get(i));
+    }
    
     
     
