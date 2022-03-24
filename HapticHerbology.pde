@@ -266,7 +266,81 @@ float[][] kernel_blur = {{ v, v, v },
                          { v, v, v }};
 /* end elements definition *********************************************************************************************/ 
 
+public class HHBlock {
+  public int start_x;
+  public int start_y;
+  public int height;
+  public int width;
+  public color c;
 
+  private PShape shape;
+
+  public HHBlock(int startX, int startY, int w,  int h, color c) {
+    start_x = startX;
+    start_y = startY;
+    width = w;
+    height = h;
+    this.c = c;
+
+    shape = createShape(RECT, right_image_margin_x + start_x, right_image_margin_y + start_y, width, height);
+    shape.setFill(c);
+    shape.setStroke(false);
+    shape(shape);
+  }
+
+  public void hide(){
+    shape.setStroke(color(255));
+    shape(shape);
+  }
+}
+
+ArrayList<HHBlock> blocks = new ArrayList<HHBlock>();
+
+public int getBlockIndexAtCoord(int x, int y){
+  for (int i = 0; i < blocks.size(); ++i) {
+    HHBlock block = blocks.get(i);
+    // if(x < 10 && y == 0 && block.start_x < 10 && block.start_y < 10){
+    //   println("block", block.start_x, block.start_y);
+    // }
+
+    if(block.start_x == x && block.start_y == y){
+      
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+public int getBlockIndexBelowCoords(int x, int y) {
+  int index_1 = getBlockIndexAtCoord(x,y);
+  if(index_1 == -1) return -1;
+  HHBlock a = blocks.get(index_1);
+
+  int index_2 = getBlockIndexAtCoord(a.start_x, a.start_y + a.height);
+  if(index_2 == -1) return -1;
+  HHBlock b = blocks.get(index_2);
+
+  if(a.height == b.height)
+    return index_2;
+
+  return -1;
+}
+
+public int getBlockIndexNextToCoords(int x, int y) {
+  int index_1 = getBlockIndexAtCoord(x, y);
+  if(index_1 == -1) return -1;
+  HHBlock a = blocks.get(index_1);
+
+  int index_2 = getBlockIndexAtCoord(a.start_x + a.width, a.start_y);
+  if(index_2 == -1) return -1;
+  HHBlock b = blocks.get(index_2);
+
+  if(a.width == b.width)
+    return index_2;
+
+  return -1;
+}
 
 /* setup section *******************************************************************************************************/
 void setup(){
@@ -331,8 +405,9 @@ void setup(){
   image(right_image, right_image_margin_x, right_image_margin_y);
 
   left_image.loadPixels();
-  // temp_image.loadPixels();
   right_image.loadPixels();
+
+  println("image: ", left_image.width, left_image.height);
 
   textSize(48);
   text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
@@ -342,81 +417,124 @@ void setup(){
   text("This image tracks position", left_image_margin_x, left_image_margin_y + left_image.height + 40);
   text("This image has pre-lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
   
-  // for (int y = 1; y < left_image.height-1; y++) { // Skip top and bottom edges
-  //   for (int x = 1; x < left_image.width-1; x++) { // Skip left and right edges
-  //     float sum = 0; // Kernel sum for this pixel
-  //     for (int ky = -1; ky <= 1; ky++) {
-  //       for (int kx = -1; kx <= 1; kx++) {
-  //         // Calculate the adjacent pixel for this kernel point
-  //         int pos = (y + ky)*left_image.width + (x + kx);
-  //         // Image is grayscale, red/green/blue are identical
-  //         float val = red(left_image.pixels[pos]);
-  //         // Multiply adjacent pixels based on the kernel values
-  //         sum += kernel[ky+1][kx+1] * val;
-  //       }
-  //     }
-  //     // For this pixel in the new image, set the gray value
-  //     // based on the sum from the kernel
-  //     temp_image.pixels[y*left_image.width + x] = color(sum, sum, sum);
-  //   }
-  // }
+  /* Start by cleaning the image */
+  for (int y = 1; y < left_image.height-1; y++) { // Skip top and bottom edges
+    for (int x = 1; x < left_image.width-1; x++) { // Skip left and right edges
+      float majority = 0; // Kernel sum for this pixel
+      for (int ky = -1; ky <= 1; ky++) {
+        for (int kx = -1; kx <= 1; kx++) {
+          int pos = (y + ky) * left_image.width + (x + kx);
+          float val = red(left_image.pixels[pos]);
 
+          majority += (val == 0 ? -1 : 1);
+        }
+      }
+      
+      int c = majority >= 0 ? 255 : 0;
+      right_image.pixels[y*left_image.width + x] = color(c);
+    }
+  }
 
-  // for (int y = 1; y < temp_image.height-1; y++) {   // Skip top and bottom edges
-  //     for (int x = 1; x < temp_image.width-1; x++) {  // Skip left and right edges
-  //       float sum = 0; // Kernel sum for this pixel
-  //       for (int ky = -1; ky <= 1; ky++) {
-  //         for (int kx = -1; kx <= 1; kx++) {
-  //           // Calculate the adjacent pixel for this kernel point
-  //           int pos = (y + ky)*temp_image.width + (x + kx);
-  //           // Image is grayscale, red/green/blue are identical
-  //           float val = red(temp_image.pixels[pos]);
-  //           // Multiply adjacent pixels based on the kernel values
-  //           sum += kernel_blur[ky+1][kx+1] * val;
-  //         }
-  //       }
-  //       // For this pixel in the new image, set the gray value
-  //       // based on the sum from the kernel
-  //       right_image.pixels[y*temp_image.width + x] = color(sum);
-  //     }
-  //   }
-
-  // right_image.updatePixels();
+  right_image.updatePixels();
   // image(right_image, right_image_margin_x, right_image_margin_y);
 
-  // Read image vertically
-  // Create lines accordingly
-  // right_image_lines = [];
-  int black = 0;
-  int startJ = 0;
-  int lines = 0;
-  
-  for (int i = 0; i < right_image.width; i++) {
-    println("line", i);
-    for (int j = 0; j < right_image.height; j++) {
-      float pixel = red(right_image.pixels[i + j * right_image.width]);
 
-      if(pixel < 10){
-        if(black == 0){
-          startJ = j;
-        }
-        black++;
-      }
-      if(pixel >= 5 || j == right_image.height-1){
-        if(black >= 10){
-          lines++;
-          PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
-          temp.setStroke(color(0,0,150));
-          shape(temp);
-        }
-          black = 0;
-      }
-    
+  for (int i = 0; i < right_image.height; i++) {
+    for (int j = 0; j < right_image.width; j++) {
+      float pixel_1 = red(right_image.pixels[j + i * right_image.width]);
+      if(pixel_1 == 0){
+        blocks.add(new HHBlock(j, i, 1, 1, color(100)));
+      }    
     }
-    println("lines :", lines);
-    black = 0;
-    lines = 0;
   }
+
+  // HHBlock temp = new HHBlock(5,5,5,5,color(0,255,0));
+
+  println("Groups before iterations:", blocks.size());
+
+  // 6 iterations just cause it plateaus for this image after 6.
+  for(int iterations = 0; iterations < 6; iterations++){
+    println("Iteration ", iterations);
+    // Go horizontal
+    for (int i = 0; i < right_image.height; i++) {
+      for (int j = 0; j < right_image.width - pow(2,iterations) / 2; j += pow(2,iterations) * 2) {
+        int index_1 = getBlockIndexAtCoord(j, i);
+        int index_2 = getBlockIndexNextToCoords(j, i);
+        // println("a - i,j", i, j);
+        // println("i1, i2", index_1, index_2);
+
+        if(index_1 == -1 || index_2 == -1){
+          continue;
+        }
+
+        // println("b - i,j", i, j);
+        HHBlock block_1 = blocks.get(index_1);
+        HHBlock block_2 = blocks.get(index_2);
+        // println("newBlock", j, i, block_1.width * 2, block_1.height);
+        blocks.add(new HHBlock(j, i, block_1.width * 2, block_1.height, color(random(254) + 1, random(254) + 1, random(254) + 1)));
+
+        blocks.remove(index_1);
+        blocks.remove(index_2 - 1); // -1 because it's an arraylist, so remove index1 before shifts all the index values
+      }
+    }
+
+    println("Groups after horizontal:", blocks.size());
+
+    // Go vertical
+    for (int i = 0; i < right_image.width; i++) {
+      for (int j = 0; j < right_image.height - pow(2,iterations - 1); j += pow(2,iterations + 1)) {
+        int index_1 = getBlockIndexAtCoord(i, j);
+        int index_2 = getBlockIndexBelowCoords(i, j);
+
+        if(index_1 == -1 || index_2 == -1)
+          continue;
+
+        HHBlock block_1 = blocks.get(index_1);
+        HHBlock block_2 = blocks.get(index_2);
+
+        // println("newBlock", j, i, block_1.width * 2, block_1.height);
+        blocks.add(new HHBlock(i, j, block_1.width, block_1.height * 2, color(random(254) + 1, random(254) + 1, random(254) + 1)));
+        
+        blocks.remove(index_1);
+        blocks.remove(index_2 - 1);
+      }
+    }
+    println("Groups after vertical:", blocks.size());
+  }
+
+  // // Read image vertically
+  // // Create blocks accordingly
+  // // right_image_lines = [];
+  // int black = 0;
+  // int startJ = 0;
+  // int blocks = 0;
+  
+  // for (int i = 0; i < right_image.width; i++) {
+  //   println("line", i);
+  //   for (int j = 0; j < right_image.height; j++) {
+  //     float pixel = red(right_image.pixels[i + j * right_image.width]);
+
+  //     if(pixel < 10){
+  //       if(black == 0){
+  //         startJ = j;
+  //       }
+  //       black++;
+  //     }
+  //     if(pixel >= 5 || j == right_image.height-1){
+  //       if(black >= 10){
+  //         blocks++;
+  //         PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
+  //         temp.setStroke(color(0,0,150));
+  //         shape(temp);
+  //       }
+  //         black = 0;
+  //     }
+    
+  //   }
+  //   black = 0;
+    // blocks   = 0;
+  // }
+  // println("lines :", lines);
 
 
   // noStroke();
@@ -454,6 +572,10 @@ void draw(){
   if (renderingForce == false){
     // background(152,190,100);
     update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
+
+    // for (HHBlock block : blocks) {
+    //   block.drawIt();
+    // }
   }
 
   // Equivalent to MouseMoved()
@@ -749,8 +871,3 @@ void keyPressed() {
 // }
 
 /* end helper functions section ****************************************************************************************/
-
-
-
-
- 
