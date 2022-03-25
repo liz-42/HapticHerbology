@@ -76,22 +76,6 @@ ArrayList<Integer[]> allLinePositions_left_grey = new ArrayList<Integer[]>();
 // for horizontal lines
 ArrayList<Integer[]> allHorLinePositions = new ArrayList<Integer[]>();
                               
-                              
-// horizontal lines for up and down texture
-Float[] posHorLine1 = {-0.037, 0.04, 0.033, 0.04};
-Float[] posHorLine2 = {-0.037, 0.05, 0.033, 0.05};
-Float[] posHorLine3 = {-0.037, 0.06, 0.033, 0.06};
-Float[] posHorLine4 = {-0.037, 0.07, 0.033, 0.07};
-Float[] posHorLine5 = {-0.037, 0.08, 0.033, 0.08};
-Float[] posHorLine6 = {-0.037, 0.09, 0.033, 0.09};
-Float[] posHorLine7 = {-0.037, 0.1, 0.033, 0.1};
-Float[] posHorLine8 = {-0.037, 0.11, 0.033, 0.11};
-Float[] posHorLine9 = {-0.037, 0.12, 0.033, 0.12};
-Float[] posHorLine10 = {-0.037, 0.13, 0.033, 0.13};
-Float[] posHorLine11 = {-0.037, 0.14, 0.033, 0.14};
-
-//Float[][] allHorLinePositions = {posHorLine1, posHorLine2, posHorLine3, posHorLine4, posHorLine5, posHorLine6, posHorLine7, posHorLine8,
-//                                 posHorLine9, posHorLine10, posHorLine11};
 
 
 /* generic data for a 2DOF device */
@@ -129,12 +113,7 @@ ArrayList<PShape> allLines_left_grey = new ArrayList<PShape>();
 ArrayList<PShape> allHorLines = new ArrayList<PShape>();
 
 
-                     
-
-// horizontal lines
-//PShape horLine1, horLine2, horLine3, horLine4, horLine5, horLine6, horLine7, horLine8, horLine9, horLine10, horLine11;
-
-//PShape[] allHorLines = {horLine1, horLine2, horLine3, horLine4, horLine5, horLine6, horLine7, horLine8, horLine9, horLine10, horLine11};
+                    
 
 // background and other image
 PImage bark_template;
@@ -492,25 +471,46 @@ class SimulationThread implements Runnable{
 /* helper functions section, place helper functions here ***************************************************************/
 
 void process_image(String image) {
+  // reset to prevent the right image from moving away too far
+  right_image_margin_x = left_image_margin_x + 40;
+  right_image_margin_y = left_image_margin_y;
+  
+  // reset line arrays 
+  allLinePositions = new ArrayList<Integer[]>();
+  // for left image
+  allLinePositions_left = new ArrayList<Integer[]>();
+  allLinePositions_left_grey = new ArrayList<Integer[]>();
+
+  // for horizontal lines
+  allHorLinePositions = new ArrayList<Integer[]>();
+  
+  allLines = new ArrayList<PShape>();
+
+  // lines for left image
+  allLines_left = new ArrayList<PShape>();
+  allLines_left_grey = new ArrayList<PShape>();
+
+  // horizontal lines
+  allHorLines = new ArrayList<PShape>();
+  
     // load images
   left_image = loadImage(image);
   left_image.filter(THRESHOLD);
   right_image = loadImage(image);
   right_image.filter(THRESHOLD);
   
+  // colour images
+  left_image_colour = loadImage(image);
+  right_image_colour = loadImage(image);
+  
   // resize if needed
   if (left_image.width != default_width || left_image.height != default_height) {
     left_image.resize(default_width, default_height);
     right_image.resize(default_width, default_height);
-  }
-  
-  
-  // colour version - left image
-  left_image_colour = loadImage(image);
-  // resize if needed
-  if (left_image.width != default_width || left_image.height != default_height) {
     left_image_colour.resize(default_width, default_height);
+    right_image_colour.resize(default_width, default_height);
   }
+  
   
   // original images
   right_image_margin_x += left_image.width;
@@ -518,17 +518,28 @@ void process_image(String image) {
   image(left_image, left_image_margin_x, left_image_margin_y);
   image(right_image, right_image_margin_x, right_image_margin_y);
   
-  // colour version - right image
-  right_image_colour = loadImage(image);
-  // resize if needed
-  if (right_image.width != default_width || right_image.height != default_height) {
-    right_image_colour.resize(default_width, default_height);
-  }
 
   left_image.loadPixels();
   // temp_image.loadPixels();
   right_image.loadPixels();
   
+  float sum = 0;
+  float count = 0;
+  // determine average 
+  for (int y = 0; y < right_image.height; y++){
+     for (int x = 0; x < right_image.width; x++){
+        sum += red(right_image.pixels[y + x * right_image.width]);
+        count++;
+     }
+  }
+   
+  // if the average is higher than 125, then the image likely contains more small black lines
+  int threshold = 10;
+  if (sum/count >= 125) {
+    // add more intensity
+    right_image.filter(THRESHOLD, 0.5);
+    left_image.filter(THRESHOLD, 0.5);
+  }
 
   // Read image vertically
   // Create lines accordingly
@@ -541,6 +552,7 @@ void process_image(String image) {
     //println("line", i);
     for (int j = 0; j < right_image.height; j++) {
       float pixel = red(right_image.pixels[i + j * right_image.width]);
+      //println(pixel);
 
       if(pixel < 10){
         if(black == 0){
@@ -549,7 +561,7 @@ void process_image(String image) {
         black++;
       }
       if(pixel >= 5 || j == right_image.height-1){
-        if(black >= 10){
+        if(black >= threshold){
           lines++;
           Integer[] curLinePos = {right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1};
           PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
@@ -588,7 +600,7 @@ void process_image(String image) {
        }
        if(pixel >= 5 || j == left_image.height-1){
          
-         if ((black >= 3) && (black < 10)){
+         if ((black >= 3) && (black < threshold)){
            lines++;
            Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
            PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
@@ -599,7 +611,7 @@ void process_image(String image) {
            allLinePositions_left_grey.add(curLinePos);
            allLines_left_grey.add(temp);
          }
-         else if(black >= 10){
+         else if(black >= threshold){
            lines++;
            Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
            PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
@@ -611,6 +623,7 @@ void process_image(String image) {
            allLines_left.add(temp);
            //shape(temp);
          }
+         
            black = 0;
        }
     
@@ -631,6 +644,7 @@ void process_image(String image) {
      allHorLinePositions.add(curLinePos);
      allHorLines.add(temp);
    }
+   
 }
 
 
@@ -757,7 +771,6 @@ void update_animation(float th1, float th2, float xE, float yE){
     //}
    
     
-    
   // draw background images 
   //image(left_image, left_image_margin_x, left_image_margin_y);
   //image(right_image, right_image_margin_x, right_image_margin_y);
@@ -775,16 +788,17 @@ void update_animation(float th1, float th2, float xE, float yE){
   text("This image has simple lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
   
   
-  //// show the auto generated lines
-  //for(int i=0; i < allLines.size(); i++) {
-  //    shape(allLines.get(i));
-  //}
-  //for(int i=0; i < allLines_left.size(); i++) {
-  //    shape(allLines_left.get(i));
-  //}
-  //for(int i=0; i < allLines_left_grey.size(); i++) {
-  //    shape(allLines_left_grey.get(i));
-  //}
+  // show the auto generated lines
+  for(int i=0; i < allLines.size(); i++) {
+      shape(allLines.get(i));
+  }
+  for(int i=0; i < allLines_left.size(); i++) {
+      shape(allLines_left.get(i));
+  }
+  for(int i=0; i < allLines_left_grey.size(); i++) {
+      shape(allLines_left_grey.get(i));
+  }
+  
   
      translate(xE, yE);
      shape(endEffector);
@@ -817,7 +831,7 @@ void keyPressed() {
     state = "greyscale";
   }
   else if (keyCode == 39) {
-    if(cur_image < all_images.length) {
+    if(cur_image < (all_images.length - 1)) {
       cur_image = cur_image + 1;
     }
     else {
@@ -830,10 +844,11 @@ void keyPressed() {
       cur_image = cur_image - 1;
     }
     else {
-      cur_image = all_images.length;
+      cur_image = all_images.length - 1;
     }
     process_image(all_images[cur_image]);
   }
+  println(cur_image, all_images.length);
   
 }
 
