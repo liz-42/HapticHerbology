@@ -324,7 +324,7 @@ class SimulationThread implements Runnable{
       
         PVector[] lineForces = new PVector[allLinePositions.size()];
         for (int i=0; i < line_endeffector_offsets.length; i++) {
-          lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall, 1);
+          lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall, 1); // 1 applies inward line force
         }
       
       
@@ -406,7 +406,7 @@ class SimulationThread implements Runnable{
       
         PVector[] lineForces_left = new PVector[allLinePositions_left.size()];
         for (int i=0; i < line_endeffector_offsets_left.length; i++) {
-          lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall, -1);
+          lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall, -1); // -1 applies outward line force
         }
       
         //boolean size_change = false;
