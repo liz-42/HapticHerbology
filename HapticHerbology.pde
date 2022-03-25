@@ -58,6 +58,9 @@ float             L                                   = 0.09;
 /* end effector radius in meters */
 float             rEE                                 = 0.003;
 
+// end effector raduis for visuals
+float             rEE_vis                             = 0.003;
+
 /* virtual wall parameter  */
 float             kWall                               = 100;
 float             hWall                               = 0.015;
@@ -406,14 +409,23 @@ class SimulationThread implements Runnable{
           lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall, -1);
         }
       
-      
+        //boolean size_change = false;
         // ensure only one vertical line can enact force upon the end effector at once
         for (int i=0; i < lineForces_left.length; i++) {
           if (lineForces_left[i].x != 0 || lineForces_left[i].y != 0) {
             fWall.add(lineForces_left[i]);
+            //// change size of end effector
+            //rEE_vis = 0.002;
+            //create_pantagraph();
+            //size_change = true;
             break;
           }
         }
+        //// reset size if not in any lines
+        //if (!size_change && rEE_vis != 0.003) {
+        //  rEE_vis = 0.003;
+        //  create_pantagraph();
+        //}
         
         
         float[][] line_endeffector_offsets_left_grey = new float[allLinePositions_left_grey.size()][4];
@@ -515,8 +527,8 @@ void process_image(String image) {
   // original images
   right_image_margin_x += left_image.width;
 
-  image(left_image, left_image_margin_x, left_image_margin_y);
-  image(right_image, right_image_margin_x, right_image_margin_y);
+  //image(left_image, left_image_margin_x, left_image_margin_y);
+  //image(right_image, right_image_margin_x, right_image_margin_y);
   
 
   left_image.loadPixels();
@@ -696,11 +708,11 @@ void create_lines_from_image(){
 }
 
 void create_pantagraph(){
-  float rEEAni = pixelsPerMeter * (rEE/2);
+  float rEEAni = pixelsPerMeter * (rEE_vis/2);
   
-  fill(127,0,0);
+  //fill(127,0,0);
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
-  endEffector.setStroke(color(0));
+  //endEffector.setStroke(color(0));
   strokeWeight(5);
   
 }
@@ -742,11 +754,17 @@ void update_animation(float th1, float th2, float xE, float yE){
   yE = pixelsPerMeter * yE;
   
   if (state == "lines") {
-    //for(int i=0; i < allLines.length; i++) {
-    //  shape(allLines[i]);
-    //}
     image(left_image, left_image_margin_x, left_image_margin_y);
     image(right_image, right_image_margin_x, right_image_margin_y);
+    for(int i=0; i < allLines.size(); i++) {
+        shape(allLines.get(i));
+    }
+    for(int i=0; i < allLines_left.size(); i++) {
+        shape(allLines_left.get(i));
+    }
+    for(int i=0; i < allLines_left_grey.size(); i++) {
+        shape(allLines_left_grey.get(i));
+    }
   }
   else if (state == "simple_image") {
     //image(bark_template, 350, 150);
@@ -770,34 +788,26 @@ void update_animation(float th1, float th2, float xE, float yE){
     //  shape(allHorLines.get(i));
     //}
    
-    
-  // draw background images 
-  //image(left_image, left_image_margin_x, left_image_margin_y);
-  //image(right_image, right_image_margin_x, right_image_margin_y);
-
-  //left_image.loadPixels();
-  //// temp_image.loadPixels();
-  //right_image.loadPixels();
 
   textSize(48);
   text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
   text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
 
-  textSize(20);
-  text("This image has a gradient", left_image_margin_x, left_image_margin_y + left_image.height + 40);
-  text("This image has simple lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
+//  textSize(20);
+//  text("This image has a gradient", left_image_margin_x, left_image_margin_y + left_image.height + 40);
+//  text("This image has simple lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
   
   
   // show the auto generated lines
-  for(int i=0; i < allLines.size(); i++) {
-      shape(allLines.get(i));
-  }
-  for(int i=0; i < allLines_left.size(); i++) {
-      shape(allLines_left.get(i));
-  }
-  for(int i=0; i < allLines_left_grey.size(); i++) {
-      shape(allLines_left_grey.get(i));
-  }
+  //for(int i=0; i < allLines.size(); i++) {
+  //    shape(allLines.get(i));
+  //}
+  //for(int i=0; i < allLines_left.size(); i++) {
+  //    shape(allLines_left.get(i));
+  //}
+  //for(int i=0; i < allLines_left_grey.size(); i++) {
+  //    shape(allLines_left_grey.get(i));
+  //}
   
   
      translate(xE, yE);
@@ -816,7 +826,7 @@ PVector graphics_to_device(PVector graphicsFrame){
 void keyPressed() {
   println("keyPressed", keyCode);
   if (keyCode == '1') {
-    //state = "lines";
+    state = "lines";
   }
   else if (keyCode == '2') {
     state = "simple_image";
