@@ -305,29 +305,89 @@ class SimulationThread implements Runnable{
       fWall.set(0, 0);
       
       
-      //println(posEE.x, posEE.y);
+      // change force offsets for main vertical lines depending on tree type
+      if (tree_state == "oak") {
+        float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+          force_offset = force_offset + 0.01;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+          force_offset = force_offset + 0.005;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+          force_offset = force_offset + 0.02;
+        }
+        float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
       
-      float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
-      //if ((posEE.x < -0.006 || (posEE.x > 0.012 && posEE.x < 0.02))) {
-      //  force_offset = 0.02;
-      //}
-      if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
-        force_offset = force_offset + 0.01;
-      }
-      else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
-        force_offset = force_offset + 0.005;
-      }
-      else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
-        force_offset = force_offset + 0.02;
-      }
-      float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
-      
-      // adjustments to height offset
-      if (posEE.y < 0.03) {
-        height_offset = height_offset + 0.05;
-      }
+        // adjustments to height offset
+        if (posEE.y < 0.03) {
+          height_offset = height_offset + 0.05;
+        }
 
-      penWall.set(1/(height_offset + force_offset), 0);
+        penWall.set(1/(height_offset + force_offset), 0);
+      }
+      else if (tree_state == "cedar") {
+        float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+          force_offset = force_offset + 0.01;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+          force_offset = force_offset + 0.005;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+          force_offset = force_offset + 0.02;
+        }
+        float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+        // adjustments to height offset
+        if (posEE.y < 0.03) {
+          height_offset = height_offset + 0.05;
+        }
+
+        penWall.set(1/((height_offset + force_offset)*1.25), 0);
+      }
+      else if (tree_state == "chestnut") {
+        float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+          force_offset = force_offset + 0.01;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+          force_offset = force_offset + 0.005;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+          force_offset = force_offset + 0.02;
+        }
+        float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+        // adjustments to height offset
+        if (posEE.y < 0.03) {
+          height_offset = height_offset + 0.05;
+        }
+
+        penWall.set(1/(height_offset + force_offset), 0);
+      }
+      else {
+        float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+          force_offset = force_offset + 0.01;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+          force_offset = force_offset + 0.005;
+        }
+        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+          force_offset = force_offset + 0.02;
+        }
+        float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+        // adjustments to height offset
+        if (posEE.y < 0.03) {
+          height_offset = height_offset + 0.05;
+        }
+
+        penWall.set(1/(height_offset + force_offset), 0);
+      }
+      
+      
       
       
       // no need to calculate everything at once - it introduces lag
@@ -365,8 +425,19 @@ class SimulationThread implements Runnable{
           }
         }
         
-              // horizontal lines
-      penWall.set(0, 10);
+      // change force offset for horizontal lines depending on tree type
+      if (tree_state == "oak") {
+        penWall.set(0, 10);
+      }
+      else if (tree_state == "cedar") {
+        penWall.set(0, 5);
+      }
+      else if (tree_state == "chestnut") {
+        penWall.set(0, 10);
+      }
+      else {
+        penWall.set(0, 10);
+      }
       
       float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.size()][4];
       
@@ -397,25 +468,90 @@ class SimulationThread implements Runnable{
       else { // left image
       
       
-        // force offsets for grey lines
-        float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
-        if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
-          force_offset_grey = force_offset_grey + 0.01;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
-          force_offset_grey = force_offset_grey + 0.02;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
-          force_offset_grey = force_offset_grey + 0.03;
-        }
-        float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        // change force offsets for grey lines depending on tree type
+        if (tree_state == "oak") {
+          float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+          if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+            force_offset_grey = force_offset_grey + 0.01;
+          }
+          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+            force_offset_grey = force_offset_grey + 0.02;
+          }
+          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+            force_offset_grey = force_offset_grey + 0.03;
+          }
+          float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
       
-        // adjustments to height offset
-        if (posEE.y < 0.03) {
-          height_offset_grey = height_offset_grey + 0.05;
-        }
+          // adjustments to height offset
+          if (posEE.y < 0.03) {
+            height_offset_grey = height_offset_grey + 0.05;
+          }
 
-        penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
+          penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
+        }
+        else if (tree_state == "cedar") {
+          float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+          if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+            force_offset_grey = force_offset_grey + 0.01;
+          }
+          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+            force_offset_grey = force_offset_grey + 0.02;
+          }
+          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+            force_offset_grey = force_offset_grey + 0.03;
+          }
+          float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+          // adjustments to height offset
+          if (posEE.y < 0.03) {
+            height_offset_grey = height_offset_grey + 0.05;
+          }
+
+          penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
+        }
+        else if (tree_state == "chestnut") {
+          float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+          if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+            force_offset_grey = force_offset_grey + 0.01;
+          }
+          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+            force_offset_grey = force_offset_grey + 0.02;
+          }
+          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+            force_offset_grey = force_offset_grey + 0.03;
+          }
+          float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+          // adjustments to height offset
+          if (posEE.y < 0.03) {
+            height_offset_grey = height_offset_grey + 0.05;
+          }
+
+          penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
+        }
+        else {
+          float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+          if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+            force_offset_grey = force_offset_grey + 0.01;
+          }
+          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+            force_offset_grey = force_offset_grey + 0.02;
+          }
+          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+            force_offset_grey = force_offset_grey + 0.03;
+          }
+          float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+      
+          // adjustments to height offset
+          if (posEE.y < 0.03) {
+            height_offset_grey = height_offset_grey + 0.05;
+          }
+
+          penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
+        }
+        
+        
+        
       
         float[][] line_endeffector_offsets_left = new float[allLinePositions_left.size()][4];
       
