@@ -162,19 +162,48 @@ float[][] kernel_blur = {{ v, v, v },
                          
 // file names for all the different trees
 String original_image = "oak_bark.jpg";
-String very_mossy = "very_mossy.jpg";
-String wet_and_flat = "wet_and_flat.jpg";
-String wet_with_moss = "wet_with_moss.jpg";
-String typical_bark = "typical_bark.jpg";
-String large_ridges = "large_ridges.jpg";
-String very_large_ridges = "very_large_ridges.jpg";
+//String very_mossy = "very_mossy.jpg";
+//String wet_and_flat = "wet_and_flat.jpg";
+//String wet_with_moss = "wet_with_moss.jpg";
+//String typical_bark = "typical_bark.jpg";
+//String large_ridges = "large_ridges.jpg";
+//String very_large_ridges = "very_large_ridges.jpg";
+
+String aspen_1 = "aspen_1.jpg";
+String aspen_2 = "aspen_2.jpg";
+String aspen_3 = "aspen_3.jpg";
+String aspen_4 = "aspen_4.jpg";
+
+String horse_chestnut_1 = "horse_chestnut_1.jpg";
+String horse_chestnut_2 = "horse_chestnut_2.jpg";
+String horse_chestnut_3 = "horse_chestnut_3.jpg";
+String horse_chestnut_4 = "horse_chestnut_4.jpg";
+
+String cedar_1 = "cedar_1.jpg";
+String cedar_2 = "cedar_2.jpg";
+String cedar_3 = "cedar_3.jpg";
+String cedar_4 = "cedar_4.jpg";
+
+String oak_1 = "oak_bark.jpg";
+String oak_2 = "wet_and_flat.jpg";
+String oak_3 = "typical_bark.jpg";
+String oak_4 = "large_ridges.jpg";
+
+
+// arrays for different tree types
+String[] aspen_trees = {aspen_1, aspen_2, aspen_3, aspen_4};
+String[] chestnut_trees = {horse_chestnut_1, horse_chestnut_2, horse_chestnut_3, horse_chestnut_4};
+String[] cedar_trees = {cedar_1, cedar_2, cedar_3, cedar_4};
+String[] oak_trees = {oak_1, oak_2, oak_3, oak_4};
 
 // array to switch between images with arrow keys
-String[] all_images = {original_image, very_mossy, wet_and_flat, wet_with_moss, typical_bark, large_ridges, very_large_ridges};
+String[] all_images = oak_trees;
 int cur_image = 0;
 int default_width = 0;
 int default_height = 0; 
 
+// state to control which set of trees should be rendered
+String tree_state = "oak";
 
 
 
@@ -224,13 +253,13 @@ void setup(){
    create_pantagraph();
 
   // get default height and width to use for all images
-  left_image = loadImage(original_image);
+  PImage temp = loadImage(original_image);
   
-  default_width = left_image.width;
-  default_height = left_image.height;
+  default_width = temp.width;
+  default_height = temp.height;
   
   // calculates image lines and placement
-  process_image(original_image);
+  process_image(all_images[0]);
 
 
   /* setup framerate speed */
@@ -765,6 +794,9 @@ void update_animation(float th1, float th2, float xE, float yE){
     for(int i=0; i < allLines_left_grey.size(); i++) {
         shape(allLines_left_grey.get(i));
     }
+    for(int i=0; i < allHorLines.size(); i++) {
+      shape(allHorLines.get(i));
+    }
   }
   else if (state == "simple_image") {
     //image(bark_template, 350, 150);
@@ -784,9 +816,7 @@ void update_animation(float th1, float th2, float xE, float yE){
   }
   
   
-    //for(int i=0; i < allHorLines.size(); i++) {
-    //  shape(allHorLines.get(i));
-    //}
+    
    
 
   textSize(48);
@@ -834,12 +864,28 @@ void keyPressed() {
   else if (keyCode == '3') {
     state = "detailed_image";
   } 
-  else if(keyCode == 'b' || keyCode == 'B'){
-    state = "blackandwhite";
-  } 
-  else if(keyCode == 'g' || keyCode == 'G'){
-    state = "greyscale";
+  // toggle which type of tree is rendered
+  else if (keyCode == 79) { // o
+    tree_state = "oak";
+    all_images = oak_trees;
+    process_image(all_images[cur_image]);
   }
+  else if (keyCode == 67) { // c
+    tree_state = "cedar";
+    all_images = cedar_trees;
+    process_image(all_images[cur_image]);
+  }
+  else if (keyCode == 72) { // h
+    tree_state = "chestnut";
+    all_images = chestnut_trees;
+    process_image(all_images[cur_image]);
+  }
+  else if (keyCode == 65) { // a
+    tree_state = "aspen";
+    all_images = aspen_trees;
+    process_image(all_images[cur_image]);
+  }
+  // right and left arrow keys to toggle image
   else if (keyCode == 39) {
     if(cur_image < (all_images.length - 1)) {
       cur_image = cur_image + 1;
