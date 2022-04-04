@@ -231,7 +231,7 @@ void setup(){
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
   
-  haplyBoard          = new Board(this, "COM4", 0);
+  haplyBoard          = new Board(this, "COM7", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
@@ -269,7 +269,6 @@ void setup(){
   /* setup simulation thread to run at 1kHz */ 
   SimulationThread st = new SimulationThread();
   scheduler.scheduleAtFixedRate(st, 1, 1, MILLISECONDS);
-  
 }
 /* end setup section ***************************************************************************************************/
 
@@ -280,11 +279,8 @@ void draw(){
 }
 /* end draw section ****************************************************************************************************/
 
-
-
 /* simulation section **************************************************************************************************/
 class SimulationThread implements Runnable{
-  
   public void run(){
     /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
     
@@ -650,40 +646,37 @@ class SimulationThread implements Runnable{
 /* helper functions section, place helper functions here ***************************************************************/
 
 void process_image(String image) {
-  // reset to prevent the right image from moving away too far
+  // Reset to prevent the right image from moving away too far
   right_image_margin_x = left_image_margin_x + 40;
   right_image_margin_y = left_image_margin_y;
   
-  // reset line arrays 
+  // Reset line arrays 
   allLinePositions = new ArrayList<Integer[]>();
-  // for left image
+  // For left image
   allLinePositions_left = new ArrayList<Integer[]>();
   allLinePositions_left_grey = new ArrayList<Integer[]>();
 
-  // for horizontal lines
+  // For horizontal lines
   allHorLinePositions = new ArrayList<Integer[]>();
   
   allLines = new ArrayList<PShape>();
 
-  // lines for left image
+  // Lines for left image
   allLines_left = new ArrayList<PShape>();
   allLines_left_grey = new ArrayList<PShape>();
 
-  // horizontal lines
+  // Horizontal lines
   allHorLines = new ArrayList<PShape>();
 
-  
-    // load images
+  // Load images
   left_image = loadImage(image);
-  left_image.filter(THRESHOLD);
   right_image = loadImage(image);
-  right_image.filter(THRESHOLD);
   
-  // colour images
+  // Colour images
   left_image_colour = loadImage(image);
   right_image_colour = loadImage(image);
   
-  // resize if needed
+  // Resize if needed
   if (left_image.width != default_width || left_image.height != default_height) {
     left_image.resize(default_width, default_height);
     right_image.resize(default_width, default_height);
@@ -691,21 +684,16 @@ void process_image(String image) {
     right_image_colour.resize(default_width, default_height);
   }
   
-  
-  // original images
+  // Original images
   right_image_margin_x += left_image.width;
 
-  //image(left_image, left_image_margin_x, left_image_margin_y);
-  //image(right_image, right_image_margin_x, right_image_margin_y);
-  
-
   left_image.loadPixels();
-  // temp_image.loadPixels();
   right_image.loadPixels();
   
   float sum = 0;
   float count = 0;
-  // determine average 
+
+  // Determine average 
   for (int y = 0; y < right_image.height; y++){
      for (int x = 0; x < right_image.width; x++){
         sum += red(right_image.pixels[y + x * right_image.width]);
@@ -713,21 +701,19 @@ void process_image(String image) {
      }
   }
    
-  // if the average is higher than 125, then the image likely contains more small black lines
+  // If the average is higher than 125, then the image likely contains more small black lines
   int threshold = 10;
-  int threshold_grey = 3; // for the smaller lines
-  if (sum/count >= 125) {
-    // add more intensity
-    right_image.filter(THRESHOLD, 0.5);
-    left_image.filter(THRESHOLD, 0.5);
-  }
+  int threshold_grey = 3; // For the smaller lines
+
+  right_image.filter(THRESHOLD);
+  left_image.filter(THRESHOLD);
   
-  // lower the threshold for aspen trees
+  // Lower the threshold for aspen trees
   if (tree_state == "aspen") {
     threshold = 2;
     threshold_grey = 1;
   }
-  // lower the threshold for chestnut trees
+  // Lower the threshold for chestnut trees
   if (tree_state == "chestnut") {
     threshold = 5;
     threshold_grey = 2;
@@ -735,125 +721,109 @@ void process_image(String image) {
 
   // Read image vertically
   // Create lines accordingly
-  // right image
+
+  // Right image
   int black = 0;
   int startJ = 0;
-  int lines = 0;
   
   for (int i = 0; i < right_image.width; i++) {
-    //println("line", i);
+    black = 0;
+    startJ = 0;
     for (int j = 0; j < right_image.height; j++) {
       float pixel = red(right_image.pixels[i + j * right_image.width]);
-      //println(pixel);
 
+      // If pixel is black
       if(pixel < 10){
         if(black == 0){
           startJ = j;
         }
         black++;
       }
-      if(pixel >= 5 || j == right_image.height-1){
+
+      // If pixel is not black
+      if(pixel >= 5 || j == right_image.height - 1){
         if(black >= threshold){
-          lines++;
           Integer[] curLinePos = {right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1};
           PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
-          //println(curLinePos);
           temp.setStroke(color(0,0,150));
           
           // add to list
           allLinePositions.add(curLinePos);
           allLines.add(temp);
-          //shape(temp);
+        }
+        black = 0;
+      }
+    }
+  }
+   
+  // Left image
+  black = 0;
+  startJ = 0;
+  
+  for (int i = 0; i < left_image.width; i++) {
+    for (int j = 0; j < left_image.height; j++) {
+      float pixel = red(left_image.pixels[i + j * left_image.width]);
+
+      // If pixel is black
+      if(pixel < 10){
+        if(black == 0){
+          startJ = j;
+        }
+        black++;
+      }
+
+      // If pixel is not black
+      if(pixel >= 5 || j == left_image.height - 1){
+        if ((black >= threshold_grey) && (black < threshold)){
+          Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
+          PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
+          //println(curLinePos);
+          temp.setStroke(color(0,150,150));
+        
+          // add to list
+          allLinePositions_left_grey.add(curLinePos);
+          allLines_left_grey.add(temp);
+        }
+        else if(black >= threshold){
+          Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
+          PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
+          temp.setStroke(color(0,0,150));
+        
+          // add to list
+          allLinePositions_left.add(curLinePos);
+          allLines_left.add(temp);
         }
           black = 0;
       }
-    
     }
-    //println("lines :", lines);
-    black = 0;
-    lines = 0;
-   }
+  }
    
-   // left image
-   black = 0;
-   startJ = 0;
-   lines = 0;
-  
-   for (int i = 0; i < left_image.width; i++) {
-     //println("line", i);
-     for (int j = 0; j < left_image.height; j++) {
-       float pixel = red(left_image.pixels[i + j * left_image.width]);
-
-       if(pixel < 10){
-         if(black == 0){
-           startJ = j;
-         }
-         black++;
-       }
-       if(pixel >= 5 || j == left_image.height-1){
-         
-         if ((black >= threshold_grey) && (black < threshold)){
-           lines++;
-           Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
-           PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
-           //println(curLinePos);
-           temp.setStroke(color(0,150,150));
-          
-           // add to list
-           allLinePositions_left_grey.add(curLinePos);
-           allLines_left_grey.add(temp);
-         }
-         else if(black >= threshold){
-           lines++;
-           Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
-           PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
-           //println(curLinePos);
-           temp.setStroke(color(0,0,150));
-          
-           // add to list
-           allLinePositions_left.add(curLinePos);
-           allLines_left.add(temp);
-           //shape(temp);
-         }
-         
-           black = 0;
-       }
-    
-     }
-     //println("lines :", lines);
-     black = 0;
-     lines = 0;
-   }
-   
-   // create horizontal lines for right image depending on tree type - vertical otherwise
-   if (tree_state == "oak" || tree_state == "cedar") {
-     
-     for (int j = 0; j < left_image.height; j=j+20) {
-       Integer[] curLinePos = {right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j};
-       PShape temp = createShape(LINE, right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j);
-       //println(curLinePos);
-       temp.setStroke(color(0,0,150));
-          
-       // add to list
-       allHorLinePositions.add(curLinePos);
-       allHorLines.add(temp);
-     }
-   }
-   else {
-     for (int j = 0; j < left_image.width; j=j+20) {
-       Integer[] curLinePos = {right_image_margin_x + j, right_image_margin_y, right_image_margin_x + j, right_image_margin_y + right_image.height};
-       PShape temp = createShape(LINE, right_image_margin_x + j, right_image_margin_y, right_image_margin_x + j, right_image_margin_y + right_image.height);
-       //println(curLinePos);
-       temp.setStroke(color(0,0,150));
-          
-       // add to list
-       allHorLinePositions.add(curLinePos);
-       allHorLines.add(temp);
-     }
-   }
+  // Create horizontal lines for right image depending on tree type - vertical otherwise
+  if (tree_state == "oak" || tree_state == "cedar") {
+    for (int j = 0; j < left_image.height; j=j+20) {
+      Integer[] curLinePos = {right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j};
+      PShape temp = createShape(LINE, right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j);
+      //println(curLinePos);
+      temp.setStroke(color(0,0,150));
+        
+      // add to list
+      allHorLinePositions.add(curLinePos);
+      allHorLines.add(temp);
+    }
+  }
+  else {
+    for (int j = 0; j < left_image.width; j=j+20) {
+      Integer[] curLinePos = {right_image_margin_x + j, right_image_margin_y, right_image_margin_x + j, right_image_margin_y + right_image.height};
+      PShape temp = createShape(LINE, right_image_margin_x + j, right_image_margin_y, right_image_margin_x + j, right_image_margin_y + right_image.height);
+      //println(curLinePos);
+      temp.setStroke(color(0,0,150));
+        
+      // add to list
+      allHorLinePositions.add(curLinePos);
+      allHorLines.add(temp);
+    }
+  }
 }
-
-
 
 void create_line_graphics(PShape[] shapes, Float[][] positions) {
   for(int i=0; i < shapes.length; i++) {
@@ -869,45 +839,12 @@ void create_hor_line_graphics(PShape[] shapes, Float[][] positions) {
   }
 }
 
-void create_lines_from_image(){
-  println("Create Lines From Image");
-  // bark_detailed = loadImage("oak_bark.jpg");
-  // bark_template = loadImage("oak_bark_black_and_white.jpg");
-  // bark_BAW = loadImage("oak_bark.jpg");
-  // bark_GREY = loadImage("oak_bark.jpg");
-  // bark_BAW.filter(THRESHOLD);
-  // bark_GREY.filter(GRAY);
-  int white = 0;
-  int black = 0;
-  float threshold = 255/2;
-  bark_BAW.loadPixels();
-  for (int i = 0; i < bark_BAW.height; ++i) {
-    for (int j = 0; j < bark_BAW.width; ++j) {
-      int loc = j + i * bark_BAW.width;
-      float r = red(bark_BAW.pixels[loc]);
-      float g = green(bark_BAW.pixels[loc]);
-      float b = blue(bark_BAW.pixels[loc]);
-
-      if((r+g+b)/3 >= threshold){
-        white++;
-      } else {
-        black++;
-      }
-      
-    }
-  }
-
-  println("White pixels: ", white);
-  println("Black pixels: ", black);
-}
-
 void create_pantagraph(){
   float rEEAni = pixelsPerMeter * (rEE_vis/2);
   
-  //fill(127,0,0);
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
   //endEffector.setStroke(color(0));
-  strokeWeight(5);
+  strokeWeight(1);
   
 }
 
@@ -988,25 +925,25 @@ void update_animation(float th1, float th2, float xE, float yE){
   text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
   text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
 
-//  textSize(20);
-//  text("This image has a gradient", left_image_margin_x, left_image_margin_y + left_image.height + 40);
-//  text("This image has simple lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
+  //  textSize(20);
+  //  text("This image has a gradient", left_image_margin_x, left_image_margin_y + left_image.height + 40);
+  //  text("This image has simple lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
   
   
   // show the auto generated lines
-  //for(int i=0; i < allLines.size(); i++) {
-  //    shape(allLines.get(i));
-  //}
-  //for(int i=0; i < allLines_left.size(); i++) {
-  //    shape(allLines_left.get(i));
-  //}
-  //for(int i=0; i < allLines_left_grey.size(); i++) {
-  //    shape(allLines_left_grey.get(i));
-  //}
+  for(int i=0; i < allLines.size(); i++) {
+     shape(allLines.get(i));
+  }
+  for(int i=0; i < allLines_left.size(); i++) {
+     shape(allLines_left.get(i));
+  }
+  for(int i=0; i < allLines_left_grey.size(); i++) {
+     shape(allLines_left_grey.get(i));
+  }
   
   
-     translate(xE, yE);
-     shape(endEffector);
+  translate(xE, yE);
+  shape(endEffector);
 }
 
 PVector device_to_graphics(PVector deviceFrame){
@@ -1019,7 +956,7 @@ PVector graphics_to_device(PVector graphicsFrame){
 
 // change state when any key pressed
 void keyPressed() {
-  //println("keyPressed", keyCode);
+  println("keyPressed", keyCode);
   if (keyCode == '1') {
     state = "lines";
   }
@@ -1069,38 +1006,7 @@ void keyPressed() {
     }
     process_image(all_images[cur_image]);
   }
-  //println(cur_image, all_images.length);
+  println(cur_image, all_images.length);
   
 }
-
-// void mouseClicked(){
-//   println("Mouse clicked", mouseX, mouseY);
-  
-//   int loc = mouseY + mouseX * bark_BAW.width;
-//   float r = red(bark_BAW.pixels[loc]);
-//   float g = green(bark_BAW.pixels[loc]);
-//   float b = blue(bark_BAW.pixels[loc]);
-
-//   println("loc: ", loc, " rgb:", r,g,b);
-  
-// }
-
-// void mouseMoved(){
-//   if(renderingForce){
-//     println("Mouse loc", mouseX, mouseY);
-
-//     int loc = mouseY + mouseX * bark_BAW.width;
-//     float r = red(bark_BAW.pixels[loc]);
-//     float g = green(bark_BAW.pixels[loc]);
-//     float b = blue(bark_BAW.pixels[loc]);
-
-//     println("loc: ", loc, " rgb:", r,g,b);
-//   }
-// }
-
 /* end helper functions section ****************************************************************************************/
-
-
-
-
- 
