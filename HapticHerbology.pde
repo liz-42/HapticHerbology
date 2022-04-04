@@ -276,10 +276,7 @@ void setup(){
 /* draw section ********************************************************************************************************/
 void draw(){
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
-  if (renderingForce == false){
-    // background(152,190,100);
-    update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
-  }
+  update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
 }
 /* end draw section ****************************************************************************************************/
 
@@ -1022,7 +1019,7 @@ PVector graphics_to_device(PVector graphicsFrame){
 
 // change state when any key pressed
 void keyPressed() {
-  println("keyPressed", keyCode);
+  //println("keyPressed", keyCode);
   if (keyCode == '1') {
     state = "lines";
   }
@@ -1072,7 +1069,7 @@ void keyPressed() {
     }
     process_image(all_images[cur_image]);
   }
-  println(cur_image, all_images.length);
+  //println(cur_image, all_images.length);
   
 }
 
