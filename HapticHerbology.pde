@@ -350,13 +350,13 @@ class SimulationThread implements Runnable{
       else if (tree_state == "chestnut") {
         float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
-          force_offset = force_offset + 0.01;
+          force_offset = force_offset + 0.03;
         }
         else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
-          force_offset = force_offset + 0.005;
+          force_offset = force_offset + 0.04;
         }
         else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
-          force_offset = force_offset + 0.02;
+          force_offset = force_offset + 0.04;
         }
         float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
       
@@ -365,7 +365,7 @@ class SimulationThread implements Runnable{
           height_offset = height_offset + 0.05;
         }
 
-        penWall.set(1/(height_offset + force_offset), 0);
+        penWall.set(0, 1/(height_offset + force_offset));
       }
       else {
         float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
@@ -435,7 +435,10 @@ class SimulationThread implements Runnable{
         penWall.set(0, 5);
       }
       else if (tree_state == "chestnut") {
-        penWall.set(0, 10);
+        penWall.set(5, 0);
+        if ((( posEE.x < 0.02) && (posEE.x > -0.02))){
+          penWall.set(1, 0);
+        }
       }
       else {
         penWall.set(5, 0);
@@ -529,7 +532,7 @@ class SimulationThread implements Runnable{
             height_offset_grey = height_offset_grey + 0.05;
           }
 
-          penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
+          penWallGrey.set(1/((height_offset_grey + force_offset_grey)*3), 0);
         }
         else {
           float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
@@ -549,7 +552,7 @@ class SimulationThread implements Runnable{
             height_offset_grey = height_offset_grey + 0.05;
           }
 
-          penWallGrey.set(1/((height_offset_grey + force_offset_grey)*1.5), 0);
+          penWallGrey.set(1/((height_offset_grey + force_offset_grey)*2), 0);
         }
         
         
@@ -727,6 +730,11 @@ void process_image(String image) {
     threshold = 2;
     threshold_grey = 1;
   }
+  // lower the threshold for chestnut trees
+  if (tree_state == "chestnut") {
+    threshold = 5;
+    threshold_grey = 2;
+  }
 
   // Read image vertically
   // Create lines accordingly
@@ -821,7 +829,7 @@ void process_image(String image) {
    }
    
    // create horizontal lines for right image depending on tree type - vertical otherwise
-   if (tree_state != "aspen") {
+   if (tree_state == "oak" || tree_state == "cedar") {
      
      for (int j = 0; j < left_image.height; j=j+20) {
        Integer[] curLinePos = {right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j};
