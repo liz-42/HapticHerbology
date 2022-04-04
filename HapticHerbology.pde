@@ -109,6 +109,9 @@ PShape[] right_image_lines = {};
 
 int screen_width = 650;
 int screen_height = 584;
+
+int default_image_width;
+int default_image_height;
 // states for testing
 //String state = "lines";
 String state = "simple_image";
@@ -144,6 +147,10 @@ public class HHBlock {
     shape = createShape(RECT, right_image_margin_x + start_x, right_image_margin_y + start_y, width, height);
     shape.setFill(c);
     shape.setStroke(false);
+    // shape(shape);
+  }
+
+  public void show(){
     shape(shape);
   }
 
@@ -238,111 +245,14 @@ void setup(){
 
   // load images
   left_image = loadImage("oak_bark.jpg");
-  left_image.filter(THRESHOLD);
-  right_image = loadImage("oak_bark.jpg");
-  right_image.filter(THRESHOLD);
-  right_image_margin_x += left_image.width;
+  // left_image.filter(THRESHOLD);
+  // right_image = loadImage("oak_bark.jpg");
+  // right_image.filter(THRESHOLD);
 
-  image(left_image, left_image_margin_x, left_image_margin_y);
-  image(right_image, right_image_margin_x, right_image_margin_y);
+  default_image_width = left_image.width;
+  default_image_height = left_image.height;
 
-  left_image.loadPixels();
-  right_image.loadPixels();
-
-  println("image: ", left_image.width, left_image.height);
-
-  textSize(48);
-  text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
-  text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
-
-  textSize(24);
-  text("This image tracks position", left_image_margin_x, left_image_margin_y + left_image.height + 40);
-  text("This image has pre-lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
-  
-  /* Start by cleaning the image */
-  for (int y = 1; y < left_image.height-1; y++) { // Skip top and bottom edges
-    for (int x = 1; x < left_image.width-1; x++) { // Skip left and right edges
-      float majority = 0; // Kernel sum for this pixel
-      for (int ky = -1; ky <= 1; ky++) {
-        for (int kx = -1; kx <= 1; kx++) {
-          int pos = (y + ky) * left_image.width + (x + kx);
-          float val = red(left_image.pixels[pos]);
-
-          majority += (val == 0 ? -1 : 1);
-        }
-      }
-      
-      int c = majority >= 0 ? 255 : 0;
-      right_image.pixels[y*left_image.width + x] = color(c);
-    }
-  }
-
-  right_image.updatePixels();
-  // image(right_image, right_image_margin_x, right_image_margin_y);
-
-
-  for (int i = 0; i < right_image.height; i++) {
-    for (int j = 0; j < right_image.width; j++) {
-      float pixel_1 = red(right_image.pixels[j + i * right_image.width]);
-      if(pixel_1 == 0){
-        blocks.add(new HHBlock(j, i, 1, 1, color(100)));
-      }    
-    }
-  }
-
-  // HHBlock temp = new HHBlock(5,5,5,5,color(0,255,0));
-
-  println("Groups before iterations:", blocks.size());
-
-  // 6 iterations just cause it plateaus for this image after 6.
-  for(int iterations = 0; iterations < 0; iterations++){
-    println("Iteration ", iterations);
-    // Go horizontal
-    for (int i = 0; i < right_image.height; i++) {
-      for (int j = 0; j < right_image.width - pow(2,iterations) / 2; j += pow(2,iterations) * 2) {
-        int index_1 = getBlockIndexAtCoord(j, i);
-        int index_2 = getBlockIndexNextToCoords(j, i);
-        // println("a - i,j", i, j);
-        // println("i1, i2", index_1, index_2);
-
-        if(index_1 == -1 || index_2 == -1){
-          continue;
-        }
-
-        // println("b - i,j", i, j);
-        HHBlock block_1 = blocks.get(index_1);
-        HHBlock block_2 = blocks.get(index_2);
-        // println("newBlock", j, i, block_1.width * 2, block_1.height);
-        blocks.add(new HHBlock(j, i, block_1.width * 2, block_1.height, color(random(254) + 1, random(254) + 1, random(254) + 1)));
-
-        blocks.remove(index_1);
-        blocks.remove(index_2 - 1); // -1 because it's an arraylist, so remove index1 before shifts all the index values
-      }
-    }
-
-    println("Groups after horizontal:", blocks.size());
-
-    // Go vertical
-    for (int i = 0; i < right_image.width; i++) {
-      for (int j = 0; j < right_image.height - pow(2,iterations - 1); j += pow(2,iterations + 1)) {
-        int index_1 = getBlockIndexAtCoord(i, j);
-        int index_2 = getBlockIndexBelowCoords(i, j);
-
-        if(index_1 == -1 || index_2 == -1)
-          continue;
-
-        HHBlock block_1 = blocks.get(index_1);
-        HHBlock block_2 = blocks.get(index_2);
-
-        // println("newBlock", j, i, block_1.width * 2, block_1.height);
-        blocks.add(new HHBlock(i, j, block_1.width, block_1.height * 2, color(random(254) + 1, random(254) + 1, random(254) + 1)));
-        
-        blocks.remove(index_1);
-        blocks.remove(index_2 - 1);
-      }
-    }
-    println("Groups after vertical:", blocks.size());
-  }
+  process_image("oak_bark.jpg");
 
   // // Read image vertically
   // // Create blocks accordingly
@@ -412,37 +322,34 @@ void setup(){
 void draw(){
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
   if (renderingForce == false){
-    // background(152,190,100);
     update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
   }
 
   // Equivalent to MouseMoved()
-  if(renderingForce){
-    newPos = new PVector(mouseX - left_image_margin_x, mouseY - left_image_margin_y);
+  // if(renderingForce){
+  //   newPos = new PVector(mouseX - left_image_margin_x, mouseY - left_image_margin_y);
     
-    if(newPos.x != posCursor.x || newPos.y != posCursor.y){
-      // Inside left image
-      if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
-        // println("Mouse loc", mouseX, mouseY);
+  //   if(newPos.x != posCursor.x || newPos.y != posCursor.y){
+  //     // Inside left image
+  //     if(newPos.x >= 0 && newPos.x < left_image.width && newPos.y >= 0 && newPos.y < left_image.height){
+  //       // println("Mouse loc", mouseX, mouseY);
 
-        float loc = newPos.x + newPos.y * left_image.width;
-        float r = red(left_image.pixels[int(loc)]);
-        float g = green(left_image.pixels[int(loc)]);
-        float b = blue(left_image.pixels[int(loc)]);
+  //       float loc = newPos.x + newPos.y * left_image.width;
+  //       float r = red(left_image.pixels[int(loc)]);
+  //       float g = green(left_image.pixels[int(loc)]);
+  //       float b = blue(left_image.pixels[int(loc)]);
 
-        // println("loc: ", loc, " rgb:", r,g,b);
-      }
-      posCursor = newPos;
-    }
-  }
+  //       // println("loc: ", loc, " rgb:", r,g,b);
+  //     }
+  //     posCursor = newPos;
+  //   }
+  // }
 }
 /* end draw section ****************************************************************************************************/
 
 
-
 /* simulation section **************************************************************************************************/
 class SimulationThread implements Runnable{
-  
   public void run(){
     /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
     
@@ -460,15 +367,28 @@ class SimulationThread implements Runnable{
       /* haptic wall force calculation */
       fWall.set(0, 0);
       
-      
-      float force_offset = 0; // to account for weakness when the end effector is perpendicular to the motors
-      if ((posEE.x < -0.006 || posEE.x > 0.012) && posEE.y < 0.1) {
-        force_offset = 0.02;
+      float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+      //if ((posEE.x < -0.006 || (posEE.x > 0.012 && posEE.x < 0.02))) {
+      //  force_offset = 0.02;
+      //}
+      if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+        force_offset = force_offset + 0.01;
       }
-      float height_offset = (posEE.y + rEE); // to account for the difference in force close and far from the motors
-
-      // penWall.set(1/(height_offset + force_offset), 0);
+      else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+        force_offset = force_offset + 0.005;
+      }
+      else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+        force_offset = force_offset + 0.02;
+      }
+      float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
       
+      // adjustments to height offset
+      if (posEE.y < 0.03) {
+        height_offset = height_offset + 0.05;
+      }
+
+      penWall.set(1/(height_offset + force_offset), 0);
+
       // float[][] line_endeffector_offsets = new float[allLinePositions.length][4];
       
       // for (int i=0; i < allLinePositions.length; i++) {
@@ -482,12 +402,10 @@ class SimulationThread implements Runnable{
       //   line_endeffector_offsets[i][3] = allLinePositions[i][3] - posEE.y; 
       // }
       
-      
       // PVector[] lineForces = new PVector[allLinePositions.length];
       // for (int i=0; i < line_endeffector_offsets.length; i++) {
       //   lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall);
       // }
-      
       
       // ensure only one vertical line can enact force upon the end effector at once
       // for (int i=0; i < lineForces.length; i++) {
@@ -513,7 +431,6 @@ class SimulationThread implements Runnable{
       //   hor_line_endeffector_offsets[i][3] = allHorLinePositions[i][3] - posEE.y; 
       // }
       
-      
       // PVector[] horLineForces = new PVector[allHorLinePositions.length];
       // for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
       //   horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall);
@@ -526,9 +443,8 @@ class SimulationThread implements Runnable{
       //   }
       // }
       
-      
-      // fEE = (fWall.copy()).mult(-1);
-      // fEE.set(graphics_to_device(fEE));
+      fEE = (fWall.copy()).mult(-1);
+      fEE.set(graphics_to_device(fEE));
       /* end haptic wall force calculation */
     }
     
@@ -543,46 +459,13 @@ class SimulationThread implements Runnable{
 
 /* helper functions section, place helper functions here ***************************************************************/
 
-void create_lines_from_image(){
-  println("Create Lines From Image");
-  // bark_detailed = loadImage("oak_bark.jpg");
-  // bark_template = loadImage("oak_bark_black_and_white.jpg");
-  // bark_BAW = loadImage("oak_bark.jpg");
-  // bark_GREY = loadImage("oak_bark.jpg");
-  // bark_BAW.filter(THRESHOLD);
-  // bark_GREY.filter(GRAY);
-  int white = 0;
-  int black = 0;
-  float threshold = 255/2;
-  bark_BAW.loadPixels();
-  for (int i = 0; i < bark_BAW.height; ++i) {
-    for (int j = 0; j < bark_BAW.width; ++j) {
-      int loc = j + i * bark_BAW.width;
-      float r = red(bark_BAW.pixels[loc]);
-      float g = green(bark_BAW.pixels[loc]);
-      float b = blue(bark_BAW.pixels[loc]);
-
-      if((r+g+b)/3 >= threshold){
-        white++;
-      } else {
-        black++;
-      }
-      
-    }
-  }
-
-  println("White pixels: ", white);
-  println("Black pixels: ", black);
-}
-
 void create_pantagraph(){
   float rEEAni = pixelsPerMeter * (rEE/2);
   
-  fill(127,0,0);
+  // fill(127,0,0);
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
-  endEffector.setStroke(color(0));
-  strokeWeight(5);
-  
+  // endEffector.setStroke(color(0));
+  // strokeWeight(5);
 }
 
 PVector calculate_line_force(float[] offsets, PVector pen_wall) {
@@ -608,36 +491,165 @@ PShape create_wall(float x1, float y1, float x2, float y2){
 }
 
 void update_animation(float th1, float th2, float xE, float yE){
-  //background(152,190,100);
+  background(125);
 
   xE = pixelsPerMeter * xE;
   yE = pixelsPerMeter * yE;
   
-  if (state == "lines") {
-    //for(int i=0; i < allLines.length; i++) {
-    //  shape(allLines[i]);
-    //}
+  // Print images
+  image(left_image, left_image_margin_x, left_image_margin_y);
+  image(right_image, right_image_margin_x, right_image_margin_y);
+
+  for (HHBlock block : blocks) {
+    block.show();
   }
-  else if (state == "simple_image") {
-    //image(bark_template, 350, 150);
-    // background(bark_template);
+
+  // if (state == "lines") {
+  //   //for(int i=0; i < allLines.length; i++) {
+  //   //  shape(allLines[i]);
+  //   //}
+  // }
+  // else if (state == "simple_image") {
+  //   //image(bark_template, 350, 150);
+  //   // background(bark_template);
+  // }
+  // else if (state == "detailed_image") {
+  //   // background(bark_detailed);
+  //   //image(bark_detailed, 350, 150);
+  // } else if (state == "blackandwhite"){
+  //   // background(bark_BAW);
+  // } else if (state == "greyscale"){
+  //   // background(bark_GREY);
+  // }
+  
+  textSize(48);
+  text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
+  text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
+
+  textSize(24);
+  text("This image tracks position", left_image_margin_x, left_image_margin_y + left_image.height + 40);
+  text("This image has pre-lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
+
+
+  translate(xE, yE);
+  shape(endEffector);
+}
+
+void process_image(String image){
+  right_image_margin_x = left_image_margin_x + 40;
+  right_image_margin_y = left_image_margin_y;
+
+  blocks = new ArrayList<HHBlock>();
+
+  left_image = loadImage(image);
+  left_image.filter(THRESHOLD);
+  right_image = loadImage(image);
+  right_image.filter(THRESHOLD);
+
+  // resize if needed
+  if (left_image.width != default_image_width || left_image.height != default_image_height) {
+    left_image.resize(default_image_width, default_image_height);
+    right_image.resize(default_image_width, default_image_height);
   }
-  else if (state == "detailed_image") {
-    // background(bark_detailed);
-    //image(bark_detailed, 350, 150);
-  } else if (state == "blackandwhite"){
-    // background(bark_BAW);
-  } else if (state == "greyscale"){
-    // background(bark_GREY);
+
+  right_image_margin_x += left_image.width;
+
+  image(left_image, left_image_margin_x, left_image_margin_y);
+  image(right_image, right_image_margin_x, right_image_margin_y);
+  textSize(48);
+  text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
+  text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
+  textSize(24);
+  text("This image tracks position", left_image_margin_x, left_image_margin_y + left_image.height + 40);
+  text("This image has pre-lines", right_image_margin_x, right_image_margin_y + right_image.height + 40);
+
+  left_image.loadPixels();
+  right_image.loadPixels();
+  
+  /* Start by cleaning the image */
+  for (int y = 1; y < left_image.height-1; y++) { // Skip top and bottom edges
+    for (int x = 1; x < left_image.width-1; x++) { // Skip left and right edges
+      float majority = 0; // Kernel sum for this pixel
+      for (int ky = -1; ky <= 1; ky++) {
+        for (int kx = -1; kx <= 1; kx++) {
+          int pos = (y + ky) * left_image.width + (x + kx);
+          float val = red(left_image.pixels[pos]);
+
+          majority += (val == 0 ? -1 : 1);
+        }
+      }
+      
+      int c = majority >= 0 ? 255 : 0;
+      right_image.pixels[y*left_image.width + x] = color(c);
+    }
   }
-  
-  
-    //for(int i=0; i < allHorLines.length; i++) {
-    //  shape(allHorLines[i]);
-    //}
-  
-    translate(xE, yE);
-    shape(endEffector);
+
+  right_image.updatePixels();
+  // image(right_image, right_image_margin_x, right_image_margin_y);
+
+
+  for (int i = 0; i < right_image.height; i++) {
+    for (int j = 0; j < right_image.width; j++) {
+      float pixel_1 = red(right_image.pixels[j + i * right_image.width]);
+      if(pixel_1 == 0){
+        blocks.add(new HHBlock(j, i, 1, 1, color(100)));
+      }    
+    }
+  }
+
+  // HHBlock temp = new HHBlock(5,5,5,5,color(0,255,0));
+
+  println("Groups before iterations:", blocks.size());
+
+  // 6 iterations just cause it plateaus for this image after 6.
+  for(int iterations = 0; iterations < 1; iterations++){
+    println("Iteration ", iterations);
+    // Go horizontal
+    for (int i = 0; i < right_image.height; i++) {
+      for (int j = 0; j < right_image.width - pow(2,iterations) / 2; j += pow(2,iterations) * 2) {
+        int index_1 = getBlockIndexAtCoord(j, i);
+        int index_2 = getBlockIndexNextToCoords(j, i);
+        // println("a - i,j", i, j);
+        // println("i1, i2", index_1, index_2);
+
+        if(index_1 == -1 || index_2 == -1){
+          continue;
+        }
+
+        // println("b - i,j", i, j);
+        HHBlock block_1 = blocks.get(index_1);
+        HHBlock block_2 = blocks.get(index_2);
+        // println("newBlock", j, i, block_1.width * 2, block_1.height);
+        blocks.add(new HHBlock(j, i, block_1.width * 2, block_1.height, color(random(254) + 1, random(254) + 1, random(254) + 1)));
+
+        blocks.remove(index_1);
+        blocks.remove(index_2 - 1); // -1 because it's an arraylist, so remove index1 before shifts all the index values
+      }
+    }
+
+    println("Groups after horizontal:", blocks.size());
+
+    // Go vertical
+    for (int i = 0; i < right_image.width; i++) {
+      for (int j = 0; j < right_image.height - pow(2,iterations - 1); j += pow(2,iterations + 1)) {
+        int index_1 = getBlockIndexAtCoord(i, j);
+        int index_2 = getBlockIndexBelowCoords(i, j);
+
+        if(index_1 == -1 || index_2 == -1)
+          continue;
+
+        HHBlock block_1 = blocks.get(index_1);
+        HHBlock block_2 = blocks.get(index_2);
+
+        // println("newBlock", j, i, block_1.width * 2, block_1.height);
+        blocks.add(new HHBlock(i, j, block_1.width, block_1.height * 2, color(random(254) + 1, random(254) + 1, random(254) + 1)));
+        
+        blocks.remove(index_1);
+        blocks.remove(index_2 - 1);
+      }
+    }
+    println("Groups after vertical:", blocks.size());
+  }
 }
 
 PVector device_to_graphics(PVector deviceFrame){
@@ -651,44 +663,19 @@ PVector graphics_to_device(PVector graphicsFrame){
 // change state when any key pressed
 void keyPressed() {
   println("keyPressed", keyCode);
-  if (keyCode == '1') {
-    //state = "lines";
-  }
-  else if (keyCode == '2') {
-    state = "simple_image";
-  }
-  else if (keyCode == '3') {
-    state = "detailed_image";
-  } else if(keyCode == 'b' || keyCode == 'B'){
-    state = "blackandwhite";
-  } else if(keyCode == 'g' || keyCode == 'G'){
-    state = "greyscale";
-  }
+  // if (keyCode == '1') {
+  //   //state = "lines";
+  // }
+  // else if (keyCode == '2') {
+  //   state = "simple_image";
+  // }
+  // else if (keyCode == '3') {
+  //   state = "detailed_image";
+  // } else if(keyCode == 'b' || keyCode == 'B'){
+  //   state = "blackandwhite";
+  // } else if(keyCode == 'g' || keyCode == 'G'){
+  //   state = "greyscale";
+  // }
 }
-
-// void mouseClicked(){
-//   println("Mouse clicked", mouseX, mouseY);
-  
-//   int loc = mouseY + mouseX * bark_BAW.width;
-//   float r = red(bark_BAW.pixels[loc]);
-//   float g = green(bark_BAW.pixels[loc]);
-//   float b = blue(bark_BAW.pixels[loc]);
-
-//   println("loc: ", loc, " rgb:", r,g,b);
-  
-// }
-
-// void mouseMoved(){
-//   if(renderingForce){
-//     println("Mouse loc", mouseX, mouseY);
-
-//     int loc = mouseY + mouseX * bark_BAW.width;
-//     float r = red(bark_BAW.pixels[loc]);
-//     float g = green(bark_BAW.pixels[loc]);
-//     float b = blue(bark_BAW.pixels[loc]);
-
-//     println("loc: ", loc, " rgb:", r,g,b);
-//   }
-// }
 
 /* end helper functions section ****************************************************************************************/
