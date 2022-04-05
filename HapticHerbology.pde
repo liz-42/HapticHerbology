@@ -808,17 +808,28 @@ void update_animation(float th1, float th2, float xE, float yE) {
   if(show_lines){
     image(render_image, render_image_margin_x, render_image_margin_y);
 
-    for(int i=0; i < allLines.size(); i++) {
-      shape(allLines.get(i));
-    }
-    for(int i=0; i < allLines_left.size(); i++) {
-      shape(allLines_left.get(i));
-    }
-    for(int i=0; i < allLines_left_grey.size(); i++) {
-      shape(allLines_left_grey.get(i));
-    }
-    for(int i=0; i < allHorLines.size(); i++) {
-      shape(allHorLines.get(i));
+    switch (force_render_technique) {
+      case 1:
+        for(int i=0; i < allLines_left.size(); i++) {
+          shape(allLines_left.get(i));
+        }
+        for(int i=0; i < allLines_left_grey.size(); i++) {
+          shape(allLines_left_grey.get(i));
+        }
+        for(int i=0; i < allHorLines.size(); i++) {
+          shape(allHorLines.get(i));
+        }
+        break;
+      case 2:
+        for(int i=0; i < allLines.size(); i++) {
+          shape(allLines.get(i));
+        }
+        for(int i=0; i < allHorLines.size(); i++) {
+          shape(allHorLines.get(i));
+        }
+        break;
+      case 3:
+        break;
     }
   }
   
