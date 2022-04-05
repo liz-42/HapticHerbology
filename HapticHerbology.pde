@@ -18,12 +18,9 @@ import static java.util.concurrent.TimeUnit.*;
 import java.util.concurrent.*;
 /* end library imports *************************************************************************************************/  
 
-
 /* scheduler definition ************************************************************************************************/ 
 private final ScheduledExecutorService scheduler      = Executors.newScheduledThreadPool(1);
 /* end scheduler definition ********************************************************************************************/ 
-
-
 
 /* device block definitions ********************************************************************************************/
 Board             haplyBoard;
@@ -36,13 +33,9 @@ int               CCW                                 = 1;
 boolean           renderingForce                     = false;
 /* end device block definition *****************************************************************************************/
 
-
-
 /* framerate definition ************************************************************************************************/
 long              baseFrameRate                       = 180;
 /* end framerate definition ********************************************************************************************/ 
-
-
 
 /* elements definition *************************************************************************************************/
 
@@ -53,7 +46,6 @@ float             radsPerDegree                       = 0.01745;
 /* pantagraph link parameters in meters */
 float             l                                   = 0.07;
 float             L                                   = 0.09;
-
 
 /* end effector radius in meters */
 float             rEE                                 = 0.003;
@@ -78,8 +70,6 @@ ArrayList<Integer[]> allLinePositions_left_grey = new ArrayList<Integer[]>();
 
 // for horizontal lines
 ArrayList<Integer[]> allHorLinePositions = new ArrayList<Integer[]>();
-                              
-
 
 /* generic data for a 2DOF device */
 /* joint space */
@@ -97,11 +87,11 @@ PVector newPos = new PVector(0,0);
 PVector           deviceOrigin                        = new PVector(0, 0);
 
 /* World boundaries reference */
-final int         worldPixelWidth                     = 1000;
+final int         worldPixelWidth                     = 1232;
 final int         worldPixelHeight                    = 650;
 
 /* graphical elements */
-PShape pGraph, joint, endEffector;
+PShape pGraph, joint, endEffector, endEffector_1, endEffector_2, endEffector_3, endEffector_4;
 
 // all lines
 ArrayList<PShape> allLines = new ArrayList<PShape>();
@@ -113,19 +103,19 @@ ArrayList<PShape> allLines_left_grey = new ArrayList<PShape>();
 // horizontal lines
 ArrayList<PShape> allHorLines = new ArrayList<PShape>();              
 
-// background and other image
-PImage bark_template;
-PImage bark_detailed;
-PImage bark_BAW;
-PImage bark_GREY;
-
 PImage left_image;
 int left_image_margin_x = 20;
 int left_image_margin_y = 80;
 
-// PImage right_image;
-// int right_image_margin_x = left_image_margin_x + 40;
-// int right_image_margin_y = left_image_margin_y;
+int top_margin_images = 80;
+PImage image_1;
+int left_margin_image_1 = 20;
+PImage image_2;
+int left_margin_image_2 = 40;
+PImage image_3;
+int left_margin_image_3 = 60;
+PImage image_4;
+int left_margin_image_4 = 80;
 
 // colour versions
 PImage left_image_colour;
@@ -133,8 +123,8 @@ PImage left_image_colour;
 
 PShape[] right_image_lines = {};
 
-int screen_width = 650;
-int screen_height = 584;
+int screen_width = 1232;
+int screen_height = 650;
 // states for testing
 String state = "simple_image";
 String renderTechnique = "";
@@ -196,7 +186,7 @@ void setup() {
   /* put setup code here, run once: */
   
   /* screen size definition */
-  size(1000, 650);
+  size(1232, 650);
   
   /* device setup */
   
@@ -587,10 +577,6 @@ class SimulationThread implements Runnable {
 /* Helper functions section, place helper functions here ***************************************************************/
 
 void process_image(String image) {
-  // Reset to prevent the right image from moving away too far
-  // right_image_margin_x = left_image_margin_x + 40;
-  // right_image_margin_y = left_image_margin_y;
-  
   // Reset line arrays 
   allLinePositions = new ArrayList<Integer[]>();
 
@@ -611,42 +597,37 @@ void process_image(String image) {
 
   // Load images
   left_image = loadImage(image);
-  // right_image = loadImage(image);
-  
-  // Colour images
   left_image_colour = loadImage(image);
-  // right_image_colour = loadImage(image);
-  
+  image_1 = loadImage(oak_trees[cur_image]);
+  image_2 = loadImage(cedar_trees[cur_image]);
+  image_3 = loadImage(chestnut_trees[cur_image]);
+  image_4 = loadImage(aspen_trees[cur_image]);
+
+  image_1.resize(default_width, default_height);
+  image_2.resize(default_width, default_height);
+  image_3.resize(default_width, default_height);
+  image_4.resize(default_width, default_height);
+
+  println("w: ", image_1.width);
+  println("h: ", image_1.height);
+
   // Resize if needed
   if (left_image.width != default_width || left_image.height != default_height) {
     left_image.resize(default_width, default_height);
-    // right_image.resize(default_width, default_height);
     left_image_colour.resize(default_width, default_height);
-    // right_image_colour.resize(default_width, default_height);
   }
   
   // Original images
-  // right_image_margin_x += left_image.width;
-
   left_image.loadPixels();
-  // right_image.loadPixels();
   
   float sum = 0;
   float count = 0;
 
-  // Determine average 
-  // for (int y = 0; y < right_image.height; y++){
-  //    for (int x = 0; x < right_image.width; x++){
-  //       sum += red(right_image.pixels[y + x * right_image.width]);
-  //       count++;
-  //    }
-  // }
    
   // If the average is higher than 125, then the image likely contains more small black lines
   int threshold = 10;
   int threshold_grey = 3; // For the smaller lines
 
-  // right_image.filter(THRESHOLD);
   left_image.filter(THRESHOLD);
   
   // Lower the threshold for aspen trees
@@ -662,44 +643,8 @@ void process_image(String image) {
 
   // Read image vertically
   // Create lines accordingly
-
-  // Right image
   int black = 0;
   int startJ = 0;
-  
-  // for (int i = 0; i < right_image.width; i++) {
-  //   black = 0;
-  //   startJ = 0;
-  //   for (int j = 0; j < right_image.height; j++) {
-  //     float pixel = red(right_image.pixels[i + j * right_image.width]);
-
-  //     // If pixel is black
-  //     if(pixel < 10){
-  //       if(black == 0){
-  //         startJ = j;
-  //       }
-  //       black++;
-  //     }
-
-  //     // If pixel is not black
-  //     if(pixel >= 5 || j == right_image.height - 1){
-  //       if(black >= threshold){
-  //         Integer[] curLinePos = {right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1};
-  //         PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
-  //         temp.setStroke(color(0,0,150));
-          
-  //         // Add to list
-  //         allLinePositions.add(curLinePos);
-  //         allLines.add(temp);
-  //       }
-  //       black = 0;
-  //     }
-  //   }
-  // }
-   
-  // Left image
-  black = 0;
-  startJ = 0;
   
   for (int i = 0; i < left_image.width; i++) {
     for (int j = 0; j < left_image.height; j++) {
@@ -741,7 +686,6 @@ void process_image(String image) {
           black = 0;
       }
     }
-    
   }
   
   // Create horizontal lines for right image depending on tree type - vertical otherwise
@@ -789,6 +733,10 @@ void create_pantagraph() {
   float rEEAni = pixelsPerMeter * (rEE_vis/2);
   
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
+  endEffector_1 = createShape(ELLIPSE, deviceOrigin.x - 283 * 1.5 - left_margin_image_1 * 1.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
+  endEffector_2 = createShape(ELLIPSE, deviceOrigin.x - 283 * 0.5 - left_margin_image_1 * 0.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
+  endEffector_3 = createShape(ELLIPSE, deviceOrigin.x + 283 * 0.5 + left_margin_image_1 * 0.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
+  endEffector_4 = createShape(ELLIPSE, deviceOrigin.x + 283 * 1.5 + left_margin_image_1 * 1.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
   //endEffector.setStroke(color(0));
   strokeWeight(1);
   
@@ -825,10 +773,19 @@ PShape create_wall(float x1, float y1, float x2, float y2) {
 
 void update_animation(float th1, float th2, float xE, float yE) {
   background(125);
-
   xE = pixelsPerMeter * xE;
   yE = pixelsPerMeter * yE;
   
+  // Show 4 images
+  image(image_1, left_margin_image_1, top_margin_images);
+  left_margin_image_2 = image_1.width + left_image_margin_x * 2;
+  image(image_2, left_margin_image_2, top_margin_images);
+  left_margin_image_3 = image_1.width * 2+ left_image_margin_x * 3;
+  image(image_3, left_margin_image_3, top_margin_images);
+  left_margin_image_4 = image_1.width * 3 + left_image_margin_x * 4;
+  image(image_4, left_margin_image_4, top_margin_images);
+
+
   if (state == "lines") {
     image(left_image, left_image_margin_x, left_image_margin_y);
     // image(right_image, right_image_margin_x, right_image_margin_y);
@@ -847,15 +804,22 @@ void update_animation(float th1, float th2, float xE, float yE) {
   }
   else if (state == "simple_image") {
     image(left_image, left_image_margin_x, left_image_margin_y);
-    // image(right_image, right_image_margin_x, right_image_margin_y);
   }
   else if (state == "detailed_image") {
     image(left_image_colour, left_image_margin_x, left_image_margin_y);
-    // image(right_image_colour, right_image_margin_x, right_image_margin_y);
   }
-  
+
   textSize(48);
-  text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
+  text("Haptic Herbology", screen_width / 2 - 150, 40);
+  textSize(30);
+  int top_margin_text = top_margin_images + image_1.height + 30;
+  text("Oak", left_margin_image_1 + 100, top_margin_text);
+  text("Cedar", left_margin_image_2 + 100, top_margin_text);
+  text("Chestnut", left_margin_image_3 + 100, top_margin_text);
+  text("Aspen", left_margin_image_4 + 100, top_margin_text);
+  
+  // textSize(48);
+  // text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
   // text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
 
   //  textSize(20);
@@ -874,9 +838,11 @@ void update_animation(float th1, float th2, float xE, float yE) {
   //    shape(allLines_left_grey.get(i));
   // }
   
-  
   translate(xE, yE);
-  shape(endEffector);
+  shape(endEffector_1);
+  shape(endEffector_2);
+  shape(endEffector_3);
+  shape(endEffector_4);
 }
 
 PVector device_to_graphics(PVector deviceFrame) {
