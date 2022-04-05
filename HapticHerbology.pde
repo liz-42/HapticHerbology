@@ -100,10 +100,8 @@ PVector           deviceOrigin                        = new PVector(0, 0);
 final int         worldPixelWidth                     = 650; //1000;
 final int         worldPixelHeight                    = 584; //650;
 
-
 /* graphical elements */
 PShape pGraph, joint, endEffector;
-
 
 // all lines
 ArrayList<PShape> allLines = new ArrayList<PShape>();
@@ -113,11 +111,7 @@ ArrayList<PShape> allLines_left = new ArrayList<PShape>();
 ArrayList<PShape> allLines_left_grey = new ArrayList<PShape>();
 
 // horizontal lines
-ArrayList<PShape> allHorLines = new ArrayList<PShape>();
-
-
-
-                    
+ArrayList<PShape> allHorLines = new ArrayList<PShape>();              
 
 // background and other image
 PImage bark_template;
@@ -138,14 +132,11 @@ int right_image_margin_y = left_image_margin_y;
 PImage left_image_colour;
 PImage right_image_colour;
 
-
 PShape[] right_image_lines = {};
-
 
 int screen_width = 650;
 int screen_height = 584;
 // states for testing
-//String state = "lines";
 String state = "simple_image";
 String renderTechnique = "";
 
@@ -153,22 +144,13 @@ float[][] kernel = {{ -1, -1, -1},
                     { -1,  9, -1}, 
                     { -1, -1, -1}};
 
-                    
 float v = 1.0 / 9.0;
 float[][] kernel_blur = {{ v, v, v }, 
                          { v, v, v }, 
                          { v, v, v }};
-                         
-                         
-                         
+
 // file names for all the different trees
 String original_image = "oak_bark.jpg";
-//String very_mossy = "very_mossy.jpg";
-//String wet_and_flat = "wet_and_flat.jpg";
-//String wet_with_moss = "wet_with_moss.jpg";
-//String typical_bark = "typical_bark.jpg";
-//String large_ridges = "large_ridges.jpg";
-//String very_large_ridges = "very_large_ridges.jpg";
 
 String aspen_1 = "aspen_1.jpg";
 String aspen_2 = "aspen_2.jpg";
@@ -190,21 +172,23 @@ String oak_2 = "wet_and_flat.jpg";
 String oak_3 = "typical_bark.jpg";
 String oak_4 = "large_ridges.jpg";
 
-
-// arrays for different tree types
+// Arrays for different tree types
 String[] aspen_trees = {aspen_1, aspen_2, aspen_3, aspen_4};
 String[] chestnut_trees = {horse_chestnut_1, horse_chestnut_2, horse_chestnut_3, horse_chestnut_4};
 String[] cedar_trees = {cedar_1, cedar_2, cedar_3, cedar_4};
 String[] oak_trees = {oak_1, oak_2, oak_3, oak_4};
 
-// array to switch between images with arrow keys
+// Array to switch between images with arrow keys
 String[] all_images = oak_trees;
 int cur_image = 0;
 int default_width = 0;
 int default_height = 0; 
 
-// state to control which set of trees should be rendered
+// State to control which set of trees should be rendered
 String tree_state = "oak";
+
+// Rendering forces technique
+int force_render_technique = 1;
 
 /* end elements definition *********************************************************************************************/ 
 
@@ -364,221 +348,227 @@ class SimulationThread implements Runnable {
 
         penWall.set(0, 1/((height_offset + force_offset)*1.5));
       }
-      
-      // No need to calculate everything at once - it introduces lag
-      if (posEE.x > 0) { // right image
-        float[][] line_endeffector_offsets = new float[allLinePositions.size()][4];
-      
-        for (int i = 0; i < allLinePositions.size(); i++) {
-          // x1 offset
-          line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x * 4000.0 + right_image.width);
-          // y1 offset
-          line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y * 4000.0); 
-          // x2 offset
-          line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x * 4000.0 + right_image.width);
-          // y2 offset
-          line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y * 4000.0); 
-        }
-      
-        PVector[] lineForces = new PVector[allLinePositions.size()];
-        for (int i=0; i < line_endeffector_offsets.length; i++) {
-          // change force orientation depending on tree type
-          lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall, 1); // 1 applies inward line force
-        }
-        // ensure only one vertical line can enact force upon the end effector at once
-        for (int i=0; i < lineForces.length; i++) {
-          if (lineForces[i].x != 0 || lineForces[i].y != 0) {
-            fWall.add(lineForces[i]);
-            break;
+
+      switch (force_render_technique) {
+        case 1: // 
+          float[][] line_endeffector_offsets = new float[allLinePositions.size()][4];
+        
+          for (int i = 0; i < allLinePositions.size(); i++) {
+            // x1 offset
+            line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x * 4000.0 + right_image.width);
+            // y1 offset
+            line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y * 4000.0); 
+            // x2 offset
+            line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x * 4000.0 + right_image.width);
+            // y2 offset
+            line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y * 4000.0); 
           }
-        }
+        
+          PVector[] lineForces = new PVector[allLinePositions.size()];
+          for (int i=0; i < line_endeffector_offsets.length; i++) {
+            // change force orientation depending on tree type
+            lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall, 1); // 1 applies inward line force
+          }
+          // ensure only one vertical line can enact force upon the end effector at once
+          for (int i=0; i < lineForces.length; i++) {
+            if (lineForces[i].x != 0 || lineForces[i].y != 0) {
+              fWall.add(lineForces[i]);
+              break;
+            }
+          }
+            
+          // change force offset for horizontal lines depending on tree type
+          if (tree_state == "oak") {
+            penWall.set(0, 10);
+          }
+          else if (tree_state == "cedar") {
+            penWall.set(0, 5);
+          }
+          else if (tree_state == "chestnut") {
+            penWall.set(5, 0);
+            if ((( posEE.x < 0.02) && (posEE.x > -0.02))){
+              penWall.set(1, 0);
+            }
+          }
+          else {
+            penWall.set(5, 0);
+          }
+        
+          float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.size()][4];
           
-        // change force offset for horizontal lines depending on tree type
-        if (tree_state == "oak") {
-          penWall.set(0, 10);
-        }
-        else if (tree_state == "cedar") {
-          penWall.set(0, 5);
-        }
-        else if (tree_state == "chestnut") {
-          penWall.set(5, 0);
-          if ((( posEE.x < 0.02) && (posEE.x > -0.02))){
-            penWall.set(1, 0);
+          for (int i=0; i < allHorLinePositions.size(); i++) {
+            // x1 offset
+            hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
+            // y1 offset
+            hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
+            // x2 offset
+            hor_line_endeffector_offsets[i][2] = allHorLinePositions.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+            // y2 offset
+            hor_line_endeffector_offsets[i][3] = allHorLinePositions.get(i)[3] - (posEE.y*4000.0); 
           }
-        }
-        else {
-          penWall.set(5, 0);
-        }
-      
-        float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.size()][4];
         
-        for (int i=0; i < allHorLinePositions.size(); i++) {
-          // x1 offset
-          hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
-          // y1 offset
-          hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
-          // x2 offset
-          hor_line_endeffector_offsets[i][2] = allHorLinePositions.get(i)[2] - (posEE.x*4000.0 + left_image.width);
-          // y2 offset
-          hor_line_endeffector_offsets[i][3] = allHorLinePositions.get(i)[3] - (posEE.y*4000.0); 
-        }
-      
-        PVector[] horLineForces = new PVector[allHorLinePositions.size()];
-        for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
-          horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall, 1);
-        }
+          PVector[] horLineForces = new PVector[allHorLinePositions.size()];
+          for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
+            horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall, 1);
+          }
+          
+          // Ensure horizontal force is off when crossing vertical lines
+          for (int i=0; i < horLineForces.length; i++) {
+            if (fWall.x == 0) {
+              fWall.add(horLineForces[i]);
+            }
+          }
+          break;
         
-        // Ensure horizontal force is off when crossing vertical lines
-        for (int i=0; i < horLineForces.length; i++) {
-          if (fWall.x == 0) {
-            fWall.add(horLineForces[i]);
-          }
-        }
-      }
-      else { // Left image
-        // change force offsets for grey lines depending on tree type
-        if (tree_state == "oak") {
-          float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
-          if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
-            force_offset_grey = force_offset_grey + 0.01;
-          }
-          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
-            force_offset_grey = force_offset_grey + 0.02;
-          }
-          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
-            force_offset_grey = force_offset_grey + 0.03;
-          }
-          float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
-      
-          // adjustments to height offset
-          if (posEE.y < 0.03) {
-            height_offset_grey = height_offset_grey + 0.05;
-          }
-
-          penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
-        }
-        else if (tree_state == "cedar") {
-          float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
-          if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
-            force_offset_grey = force_offset_grey + 0.01;
-          }
-          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
-            force_offset_grey = force_offset_grey + 0.02;
-          }
-          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
-            force_offset_grey = force_offset_grey + 0.03;
-          }
-          float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
-      
-          // adjustments to height offset
-          if (posEE.y < 0.03) {
-            height_offset_grey = height_offset_grey + 0.05;
-          }
-
-          penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
-        }
-        else if (tree_state == "chestnut") {
-          float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
-          if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
-            force_offset_grey = force_offset_grey + 0.01;
-          }
-          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
-            force_offset_grey = force_offset_grey + 0.02;
-          }
-          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
-            force_offset_grey = force_offset_grey + 0.03;
-          }
-          float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
-      
-          // adjustments to height offset
-          if (posEE.y < 0.03) {
-            height_offset_grey = height_offset_grey + 0.05;
-          }
-
-          penWallGrey.set(1/((height_offset_grey + force_offset_grey)*3), 0);
-        }
-        else {
-          float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
-          if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
-            force_offset_grey = force_offset_grey + 0.01;
-          }
-          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
-            force_offset_grey = force_offset_grey + 0.02;
-          }
-          else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
-            force_offset_grey = force_offset_grey + 0.03;
-          }
-          float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
-      
-          // adjustments to height offset
-          if (posEE.y < 0.03) {
-            height_offset_grey = height_offset_grey + 0.05;
-          }
-
-          penWallGrey.set(1/((height_offset_grey + force_offset_grey)*2), 0);
-        }
+        case 2: // 
+          // change force offsets for grey lines depending on tree type
+          if (tree_state == "oak") {
+            float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_grey = force_offset_grey + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_grey = force_offset_grey + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_grey = force_offset_grey + 0.03;
+            }
+            float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
         
-        float[][] line_endeffector_offsets_left = new float[allLinePositions_left.size()][4];
-      
-        for (int i=0; i < allLinePositions_left.size(); i++) {
-          // x1 offset
-          line_endeffector_offsets_left[i][0] = allLinePositions_left.get(i)[0] - (posEE.x*4000.0 + left_image.width);
-          // y1 offset
-          line_endeffector_offsets_left[i][1] = allLinePositions_left.get(i)[1] - (posEE.y*4000.0); 
-          // x2 offset
-          line_endeffector_offsets_left[i][2] = allLinePositions_left.get(i)[2] - (posEE.x*4000.0 + left_image.width);
-          // y2 offset
-          line_endeffector_offsets_left[i][3] = allLinePositions_left.get(i)[3] - (posEE.y*4000.0); 
-        }
-      
-        PVector[] lineForces_left = new PVector[allLinePositions_left.size()];
-        for (int i=0; i < line_endeffector_offsets_left.length; i++) {
-          lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall, -1); // -1 applies outward line force
-        }
-      
-        //boolean size_change = false;
-        // ensure only one vertical line can enact force upon the end effector at once
-        for (int i=0; i < lineForces_left.length; i++) {
-          if (lineForces_left[i].x != 0 || lineForces_left[i].y != 0) {
-            fWall.add(lineForces_left[i]);
-            //// change size of end effector
-            //rEE_vis = 0.002;
-            //create_pantagraph();
-            //size_change = true;
-            break;
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_grey = height_offset_grey + 0.05;
+            }
+
+            penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
           }
-        }
-        //// reset size if not in any lines
-        //if (!size_change && rEE_vis != 0.003) {
-        //  rEE_vis = 0.003;
-        //  create_pantagraph();
-        //}
+          else if (tree_state == "cedar") {
+            float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_grey = force_offset_grey + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_grey = force_offset_grey + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_grey = force_offset_grey + 0.03;
+            }
+            float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
         
-        float[][] line_endeffector_offsets_left_grey = new float[allLinePositions_left_grey.size()][4];
-      
-        for (int i=0; i < allLinePositions_left_grey.size(); i++) {
-          // x1 offset
-          line_endeffector_offsets_left_grey[i][0] = allLinePositions_left_grey.get(i)[0] - (posEE.x*4000.0 + left_image.width);
-          // y1 offset
-          line_endeffector_offsets_left_grey[i][1] = allLinePositions_left_grey.get(i)[1] - (posEE.y*4000.0); 
-          // x2 offset
-          line_endeffector_offsets_left_grey[i][2] = allLinePositions_left_grey.get(i)[2] - (posEE.x*4000.0 + left_image.width);
-          // y2 offset
-          line_endeffector_offsets_left_grey[i][3] = allLinePositions_left_grey.get(i)[3] - (posEE.y*4000.0); 
-        }
-      
-        PVector[] lineForces_left_grey = new PVector[allLinePositions_left_grey.size()];
-        for (int i=0; i < line_endeffector_offsets_left_grey.length; i++) {
-          lineForces_left_grey[i] = calculate_line_force(line_endeffector_offsets_left_grey[i], penWallGrey, 1);
-        }
-      
-        // ensure only one vertical line can enact force upon the end effector at once
-        for (int i=0; i < lineForces_left_grey.length; i++) {
-          if ((lineForces_left_grey[i].x != 0 || lineForces_left_grey[i].y != 0)) {
-            fWall.add(lineForces_left_grey[i]);
-            break;
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_grey = height_offset_grey + 0.05;
+            }
+
+            penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
           }
-        }
+          else if (tree_state == "chestnut") {
+            float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_grey = force_offset_grey + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_grey = force_offset_grey + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_grey = force_offset_grey + 0.03;
+            }
+            float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_grey = height_offset_grey + 0.05;
+            }
+
+            penWallGrey.set(1/((height_offset_grey + force_offset_grey)*3), 0);
+          }
+          else {
+            float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_grey = force_offset_grey + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_grey = force_offset_grey + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_grey = force_offset_grey + 0.03;
+            }
+            float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_grey = height_offset_grey + 0.05;
+            }
+
+            penWallGrey.set(1/((height_offset_grey + force_offset_grey)*2), 0);
+          }
+          
+          float[][] line_endeffector_offsets_left = new float[allLinePositions_left.size()][4];
+        
+          for (int i=0; i < allLinePositions_left.size(); i++) {
+            // x1 offset
+            line_endeffector_offsets_left[i][0] = allLinePositions_left.get(i)[0] - (posEE.x*4000.0 + left_image.width);
+            // y1 offset
+            line_endeffector_offsets_left[i][1] = allLinePositions_left.get(i)[1] - (posEE.y*4000.0); 
+            // x2 offset
+            line_endeffector_offsets_left[i][2] = allLinePositions_left.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+            // y2 offset
+            line_endeffector_offsets_left[i][3] = allLinePositions_left.get(i)[3] - (posEE.y*4000.0); 
+          }
+        
+          PVector[] lineForces_left = new PVector[allLinePositions_left.size()];
+          for (int i=0; i < line_endeffector_offsets_left.length; i++) {
+            lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall, -1); // -1 applies outward line force
+          }
+        
+          //boolean size_change = false;
+          // ensure only one vertical line can enact force upon the end effector at once
+          for (int i=0; i < lineForces_left.length; i++) {
+            if (lineForces_left[i].x != 0 || lineForces_left[i].y != 0) {
+              fWall.add(lineForces_left[i]);
+              //// change size of end effector
+              //rEE_vis = 0.002;
+              //create_pantagraph();
+              //size_change = true;
+              break;
+            }
+          }
+          //// reset size if not in any lines
+          //if (!size_change && rEE_vis != 0.003) {
+          //  rEE_vis = 0.003;
+          //  create_pantagraph();
+          //}
+          
+          float[][] line_endeffector_offsets_left_grey = new float[allLinePositions_left_grey.size()][4];
+        
+          for (int i=0; i < allLinePositions_left_grey.size(); i++) {
+            // x1 offset
+            line_endeffector_offsets_left_grey[i][0] = allLinePositions_left_grey.get(i)[0] - (posEE.x*4000.0 + left_image.width);
+            // y1 offset
+            line_endeffector_offsets_left_grey[i][1] = allLinePositions_left_grey.get(i)[1] - (posEE.y*4000.0); 
+            // x2 offset
+            line_endeffector_offsets_left_grey[i][2] = allLinePositions_left_grey.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+            // y2 offset
+            line_endeffector_offsets_left_grey[i][3] = allLinePositions_left_grey.get(i)[3] - (posEE.y*4000.0); 
+          }
+        
+          PVector[] lineForces_left_grey = new PVector[allLinePositions_left_grey.size()];
+          for (int i=0; i < line_endeffector_offsets_left_grey.length; i++) {
+            lineForces_left_grey[i] = calculate_line_force(line_endeffector_offsets_left_grey[i], penWallGrey, 1);
+          }
+        
+          // ensure only one vertical line can enact force upon the end effector at once
+          for (int i=0; i < lineForces_left_grey.length; i++) {
+            if ((lineForces_left_grey[i].x != 0 || lineForces_left_grey[i].y != 0)) {
+              fWall.add(lineForces_left_grey[i]);
+              break;
+            }
+          }
+          break;
+
+        case 3:
+
+          break;
       }
       
       fEE = (fWall.copy()).mult(-1);
@@ -908,16 +898,22 @@ PVector graphics_to_device(PVector graphicsFrame) {
 // change state when any key pressed
 void keyPressed() {
   println("keyPressed", keyCode);
-  if (keyCode == '1') {
-    state = "lines";
+
+  if (keyCode == '1'){
+    force_render_technique = 1;
+  } else if (keyCode == '2'){
+    force_render_technique = 2;
+  } else if (keyCode == '3'){
+    force_render_technique = 3;
   }
-  else if (keyCode == '2') {
-    state = "simple_image";
+
+  else if (keyCode == 32) { // Space bar
+    if(state == "lines") state = "simple_image";
+    else if(state == "simple_image") state = "detailed_image";
+    else if(state == "detailed_image") state = "lines";
   }
-  else if (keyCode == '3') {
-    state = "detailed_image";
-  } 
-  // toggle which type of tree is rendered
+
+  // Toggle which type of tree is rendered
   else if (keyCode == 79) { // o
     tree_state = "oak";
     all_images = oak_trees;
@@ -938,7 +934,8 @@ void keyPressed() {
     all_images = aspen_trees;
     process_image(all_images[cur_image]);
   }
-  // right and left arrow keys to toggle image
+
+  // Change images using Right and left arrow keys
   else if (keyCode == 39) {
     if(cur_image < (all_images.length - 1)) {
       cur_image = cur_image + 1;
@@ -957,7 +954,7 @@ void keyPressed() {
     }
     process_image(all_images[cur_image]);
   }
+
   println(cur_image, all_images.length);
-  
 }
 /* end helper functions section ****************************************************************************************/
