@@ -126,7 +126,7 @@ PShape[] right_image_lines = {};
 int screen_width = 1232;
 int screen_height = 650;
 // states for testing
-String state = "simple_image";
+String state = "regular";
 String renderTechnique = "";
 
 float[][] kernel = {{ -1, -1, -1}, 
@@ -598,18 +598,7 @@ void process_image(String image) {
   // Load images
   left_image = loadImage(image);
   left_image_colour = loadImage(image);
-  image_1 = loadImage(oak_trees[cur_image]);
-  image_2 = loadImage(cedar_trees[cur_image]);
-  image_3 = loadImage(chestnut_trees[cur_image]);
-  image_4 = loadImage(aspen_trees[cur_image]);
-
-  image_1.resize(default_width, default_height);
-  image_2.resize(default_width, default_height);
-  image_3.resize(default_width, default_height);
-  image_4.resize(default_width, default_height);
-
-  println("w: ", image_1.width);
-  println("h: ", image_1.height);
+  updateImages();
 
   // Resize if needed
   if (left_image.width != default_width || left_image.height != default_height) {
@@ -737,9 +726,7 @@ void create_pantagraph() {
   endEffector_2 = createShape(ELLIPSE, deviceOrigin.x - 283 * 0.5 - left_margin_image_1 * 0.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
   endEffector_3 = createShape(ELLIPSE, deviceOrigin.x + 283 * 0.5 + left_margin_image_1 * 0.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
   endEffector_4 = createShape(ELLIPSE, deviceOrigin.x + 283 * 1.5 + left_margin_image_1 * 1.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
-  //endEffector.setStroke(color(0));
   strokeWeight(1);
-  
 }
 
 PVector calculate_line_force(float[] offsets, PVector pen_wall, int direction) {
@@ -771,18 +758,50 @@ PShape create_wall(float x1, float y1, float x2, float y2) {
   return createShape(LINE, deviceOrigin.x + x1, deviceOrigin.y + y1, deviceOrigin.x + x2, deviceOrigin.y+y2);
 }
 
+void updateImages(){
+  image_1 = loadImage(oak_trees[cur_image]);
+  image_2 = loadImage(cedar_trees[cur_image]);
+  image_3 = loadImage(chestnut_trees[cur_image]);
+  image_4 = loadImage(aspen_trees[cur_image]);
+
+  image_1.resize(default_width, default_height);
+  image_2.resize(default_width, default_height);
+  image_3.resize(default_width, default_height);
+  image_4.resize(default_width, default_height);
+
+  println("w: ", image_1.width);
+  println("h: ", image_1.height);
+}
+
 void update_animation(float th1, float th2, float xE, float yE) {
   background(125);
   xE = pixelsPerMeter * xE;
   yE = pixelsPerMeter * yE;
   
+  switch (state) {
+    case "regular": 
+      break;
+    case "baw":
+      image_1.filter(THRESHOLD);
+      image_2.filter(THRESHOLD);
+      image_3.filter(THRESHOLD);
+      image_4.filter(THRESHOLD);
+      break;
+    case "grey":
+      image_1.filter(GRAY);
+      image_2.filter(GRAY);
+      image_3.filter(GRAY);
+      image_4.filter(GRAY);
+      break;
+  }
+
   // Show 4 images
   image(image_1, left_margin_image_1, top_margin_images);
-  left_margin_image_2 = image_1.width + left_image_margin_x * 2;
+  left_margin_image_2 = image_1.width + left_margin_image_1 * 2;
   image(image_2, left_margin_image_2, top_margin_images);
-  left_margin_image_3 = image_1.width * 2+ left_image_margin_x * 3;
+  left_margin_image_3 = image_1.width * 2+ left_margin_image_1 * 3;
   image(image_3, left_margin_image_3, top_margin_images);
-  left_margin_image_4 = image_1.width * 3 + left_image_margin_x * 4;
+  left_margin_image_4 = image_1.width * 3 + left_margin_image_1 * 4;
   image(image_4, left_margin_image_4, top_margin_images);
 
 
@@ -866,9 +885,11 @@ void keyPressed() {
   }
 
   else if (keyCode == 32) { // Space bar
-    if(state == "lines") state = "simple_image";
-    else if(state == "simple_image") state = "detailed_image";
-    else if(state == "detailed_image") state = "lines";
+    if(state == "regular") state = "baw";
+    else if(state == "baw") state = "grey";
+    else if(state == "grey") state = "regular";
+
+    updateImages();
   }
 
   // Toggle which type of tree is rendered
@@ -913,6 +934,9 @@ void keyPressed() {
     process_image(all_images[cur_image]);
   }
 
-  println(cur_image, all_images.length);
+  println("force_render_technique", force_render_technique);
+  println("state", state);
+  println("tree_state", tree_state);
+  println("cur_image", cur_image);
 }
 /* end helper functions section ****************************************************************************************/
