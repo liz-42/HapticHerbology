@@ -19,7 +19,7 @@ import java.util.concurrent.*;
 /* End library imports *************************************************************************************************/  
 
 /* Scheduler definition ************************************************************************************************/ 
-private final ScheduledExecutorService scheduler      = Executors.newScheduledThreadPool(1);
+private ScheduledExecutorService scheduler      = Executors.newScheduledThreadPool(1);
 /* End scheduler definition ********************************************************************************************/ 
 
 /* Device block definitions ********************************************************************************************/
@@ -105,9 +105,9 @@ ArrayList<PShape> allHorLines = new ArrayList<PShape>();
 
 PImage render_image;
 int render_image_margin_x = 475;
-int render_image_margin_y = 80;
+int render_image_margin_y = 100;
 
-int top_margin_images = 80;
+int top_margin_images = 100;
 PImage image_1;
 int left_margin_image_1 = 20;
 PImage image_2;
@@ -175,6 +175,10 @@ String tree_state = "oak";
 // Rendering forces technique
 int force_render_technique = 1;
 
+SimulationThread st = new SimulationThread();
+boolean changed_state = false;
+int time_with_forces = 0;
+
 boolean show_lines = false;
 
 /* End elements definition *********************************************************************************************/ 
@@ -198,7 +202,7 @@ void setup() {
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
   
-  haplyBoard          = new Board(this, "COM7", 0);
+  haplyBoard          = new Board(this, "COM4", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
@@ -232,7 +236,6 @@ void setup() {
   frameRate(baseFrameRate);
   
   /* Setup simulation thread to run at 1kHz */ 
-  SimulationThread st = new SimulationThread();
   scheduler.scheduleAtFixedRate(st, 1, 1, MILLISECONDS);
 }
 /* end setup section ***************************************************************************************************/
@@ -240,7 +243,19 @@ void setup() {
 /* draw section ********************************************************************************************************/
 void draw() {
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
-  update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
+  if (renderingForce == false) {
+    update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
+  }
+  if (changed_state && time_with_forces == 0) {
+    scheduler.shutdown();
+    st = new SimulationThread();
+    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler.scheduleAtFixedRate(st, 1, 1, MILLISECONDS);
+    changed_state = false;
+
+    println("force reset");
+  }
+  
 }
 /* end draw section ****************************************************************************************************/
 
@@ -250,6 +265,8 @@ class SimulationThread implements Runnable {
     /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
     
     renderingForce = true;
+    
+    time_with_forces++;
     
     if(haplyBoard.data_available()) {
       /* GET END-EFFECTOR STATE (TASK SPACE) */
@@ -263,6 +280,7 @@ class SimulationThread implements Runnable {
       fWall.set(0, 0);
       
       // change force offsets for main vertical lines depending on tree type
+      //println(posEE.x, posEE.y);
       if (tree_state == "oak") {
         float force_offset = 0.005 + abs(posEE.x) * 1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
@@ -315,7 +333,7 @@ class SimulationThread implements Runnable {
           height_offset = height_offset + 0.05;
         }
 
-        penWall.set(0, 1/(height_offset + force_offset));
+        penWall.set(0, 1/(height_offset + force_offset) * 1.1);
       }
       else { // Aspen
         float force_offset = 0.005 + abs(posEE.x)*1.5; // To account for weakness when the end effector is perpendicular to the motors
@@ -333,7 +351,7 @@ class SimulationThread implements Runnable {
           height_offset = height_offset + 0.05;
         }
 
-        penWall.set(0, 1/((height_offset + force_offset)*1.5));
+        penWall.set(0, 1/((height_offset + force_offset)*2));
       }
 
       switch (force_render_technique) {
@@ -417,14 +435,14 @@ class SimulationThread implements Runnable {
             else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
               force_offset_grey = force_offset_grey + 0.03;
             }
-            float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+            float height_offset_grey = (posEE.y + rEE)/1.0; // to account for the difference in force close and far from the motors
         
             // adjustments to height offset
             if (posEE.y < 0.03) {
               height_offset_grey = height_offset_grey + 0.05;
             }
 
-            penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
+            penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*4));
           }
           else if (tree_state == "cedar") {
             float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
@@ -457,7 +475,7 @@ class SimulationThread implements Runnable {
             else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
               force_offset_grey = force_offset_grey + 0.03;
             }
-            float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+            float height_offset_grey = (posEE.y + rEE)/1.0; // to account for the difference in force close and far from the motors
         
             // adjustments to height offset
             if (posEE.y < 0.03) {
@@ -572,6 +590,10 @@ class SimulationThread implements Runnable {
 /* Helper functions section, place helper functions here ***************************************************************/
 
 void process_image(String image) {
+  // variable to make sure the line forces are actually rendered in the right spot
+  int force_centering = 290;
+  
+  
   // Reset line arrays 
   allLinePositions = new ArrayList<Integer[]>();
 
@@ -638,7 +660,7 @@ void process_image(String image) {
       // If pixel is not black
       if (pixel >= 5 || j == render_image.height - 1) {
         if ((black >= threshold_grey) && (black < threshold)) {
-          Integer[] curLinePos = {render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1};
+          Integer[] curLinePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
           PShape temp = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
           //println(curLinePos);
           temp.setStroke(color(0,150,150));
@@ -648,7 +670,7 @@ void process_image(String image) {
           allLines_left_grey.add(temp);
         }
         else if (black >= threshold) {
-          Integer[] curLinePos = {render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1};
+          Integer[] curLinePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
           PShape temp = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
           temp.setStroke(color(0,0,150));
         
@@ -668,7 +690,7 @@ void process_image(String image) {
   // Create horizontal lines for right image depending on tree type - vertical otherwise
   if (tree_state == "oak" || tree_state == "cedar") {
     for (int j = 0; j < render_image.height; j=j+20) {
-      Integer[] curLinePos = {render_image_margin_x, render_image_margin_y + j, render_image_margin_x + render_image.width, render_image_margin_y + j};
+      Integer[] curLinePos = {render_image_margin_x - force_centering, render_image_margin_y + j, render_image_margin_x + render_image.width - force_centering, render_image_margin_y + j};
       PShape temp = createShape(LINE, render_image_margin_x, render_image_margin_y + j, render_image_margin_x + render_image.width, render_image_margin_y + j);
       //println(curLinePos);
       temp.setStroke(color(0,0,150));
@@ -680,7 +702,7 @@ void process_image(String image) {
   }
   else {
     for (int j = 0; j < render_image.width; j=j+20) {
-      Integer[] curLinePos = {render_image_margin_x + j, render_image_margin_y, render_image_margin_x + j, render_image_margin_y + render_image.height};
+      Integer[] curLinePos = {render_image_margin_x + j - force_centering, render_image_margin_y, render_image_margin_x + j - force_centering, render_image_margin_y + render_image.height};
       PShape temp = createShape(LINE, render_image_margin_x + j, render_image_margin_y, render_image_margin_x + j, render_image_margin_y + render_image.height);
       //println(curLinePos);
       temp.setStroke(color(0,0,150));
@@ -690,6 +712,21 @@ void process_image(String image) {
       allHorLines.add(temp);
     }
   }
+  
+  //// only render one line for now to make sure it's working
+  //ArrayList<Integer[]> tempPositions = new ArrayList<Integer[]>();
+  //ArrayList<PShape> tempLines = new ArrayList<PShape>();
+  
+  //tempPositions.add(allLinePositions_left.get(0));
+  //tempLines.add(allLines_left.get(0));
+  
+  //allLinePositions_left = tempPositions;
+  //allLines_left = tempLines;
+  
+  //allLinePositions_left_grey = tempPositions;
+  //allLines_left_grey = tempLines;
+  
+  
 }
 
 void create_pantagraph() {
@@ -707,8 +744,8 @@ void create_pantagraph() {
 PVector calculate_line_force(float[] offsets, PVector pen_wall, int direction) {
   PVector force = new PVector(0,0);
   //println(offsets);
-  Float[] test = {offsets[0] - Math.round(offsets[0]), offsets[1] - Math.round(offsets[1]), offsets[2] - Math.round(offsets[2]), offsets[3] - Math.round(offsets[3])}; 
-  //println(test);
+  //Float[] test = {offsets[0] - Math.round(offsets[0]), offsets[1] - Math.round(offsets[1]), offsets[2] - Math.round(offsets[2]), offsets[3] - Math.round(offsets[3])}; 
+  //println(offsets[0], offsets[1], offsets[2], offsets[3]);
   if (offsets[0] < 49 && offsets[1] < 6 && offsets[2] > 33 && offsets[3] > -6) {
     //println("yes");
     // make sure the force is applied inward towards the wall, whatever side we're on
@@ -785,19 +822,19 @@ void update_animation(float th1, float th2, float xE, float yE) {
 
     switch (force_render_technique) {
       case 1:
-        for(int i=0; i < allLines_left.size(); i++) {
-          shape(allLines_left.get(i));
-        }
-        for(int i=0; i < allLines_left_grey.size(); i++) {
-          shape(allLines_left_grey.get(i));
+        for(int i=0; i < allLines.size(); i++) {
+          shape(allLines.get(i));
         }
         for(int i=0; i < allHorLines.size(); i++) {
           shape(allHorLines.get(i));
         }
         break;
       case 2:
-        for(int i=0; i < allLines.size(); i++) {
-          shape(allLines.get(i));
+        for(int i=0; i < allLines_left.size(); i++) {
+          shape(allLines_left.get(i));
+        }
+        for(int i=0; i < allLines_left_grey.size(); i++) {
+          shape(allLines_left_grey.get(i));
         }
         for(int i=0; i < allHorLines.size(); i++) {
           shape(allHorLines.get(i));
@@ -857,21 +894,29 @@ void keyPressed() {
     tree_state = "oak";
     all_images = oak_trees;
     process_image(all_images[cur_image]);
+    time_with_forces = 0;
+    changed_state = true;
   }
   else if (keyCode == 67) { // c
     tree_state = "cedar";
     all_images = cedar_trees;
     process_image(all_images[cur_image]);
+    time_with_forces = 0;
+    changed_state = true;
   }
   else if (keyCode == 72) { // h
     tree_state = "chestnut";
     all_images = chestnut_trees;
     process_image(all_images[cur_image]);
+    time_with_forces = 0;
+    changed_state = true;
   }
   else if (keyCode == 65) { // a
     tree_state = "aspen";
     all_images = aspen_trees;
     process_image(all_images[cur_image]);
+    time_with_forces = 0;
+    changed_state = true;
   }
 
   // Change images using Right and left arrow keys
@@ -900,3 +945,5 @@ void keyPressed() {
   println("cur_image: ", cur_image);
 }
 /* end helper functions section ****************************************************************************************/
+
+ 
