@@ -316,7 +316,7 @@ class SimulationThread implements Runnable {
           height_offset = height_offset + 0.05;
         }
 
-        penWall.set(0, 1/(height_offset + force_offset));
+        penWall.set(0, 1/(height_offset + force_offset) * 1.1);
       }
       else { // Aspen
         float force_offset = 0.005 + abs(posEE.x)*1.5; // To account for weakness when the end effector is perpendicular to the motors
@@ -458,7 +458,7 @@ class SimulationThread implements Runnable {
             else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
               force_offset_grey = force_offset_grey + 0.03;
             }
-            float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+            float height_offset_grey = (posEE.y + rEE)/1.0; // to account for the difference in force close and far from the motors
         
             // adjustments to height offset
             if (posEE.y < 0.03) {
