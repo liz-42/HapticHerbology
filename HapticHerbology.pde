@@ -206,14 +206,10 @@ int default_height = 0;
 // state to control which set of trees should be rendered
 String tree_state = "oak";
 
-
-
 /* end elements definition *********************************************************************************************/ 
 
-
-
 /* setup section *******************************************************************************************************/
-void setup(){
+void setup() {
   /* put setup code here, run once: */
   
   /* screen size definition */
@@ -245,13 +241,12 @@ void setup(){
   
   widgetOne.device_set_parameters();
     
-  
   /* visual elements setup */
   background(125);
   deviceOrigin.add(worldPixelWidth/2, 0);
   
-   /* create pantagraph graphics */
-   create_pantagraph();
+  /* create pantagraph graphics */
+  create_pantagraph();
 
   // get default height and width to use for all images
   PImage temp = loadImage(original_image);
@@ -261,7 +256,6 @@ void setup(){
   
   // calculates image lines and placement
   process_image(all_images[0]);
-
 
   /* setup framerate speed */
   frameRate(baseFrameRate);
@@ -273,20 +267,20 @@ void setup(){
 /* end setup section ***************************************************************************************************/
 
 /* draw section ********************************************************************************************************/
-void draw(){
+void draw() {
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
   update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
 }
 /* end draw section ****************************************************************************************************/
 
 /* simulation section **************************************************************************************************/
-class SimulationThread implements Runnable{
-  public void run(){
+class SimulationThread implements Runnable {
+  public void run() {
     /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
     
     renderingForce = true;
     
-    if(haplyBoard.data_available()){
+    if(haplyBoard.data_available()) {
       /* GET END-EFFECTOR STATE (TASK SPACE) */
       widgetOne.device_read_data();
     
@@ -294,21 +288,17 @@ class SimulationThread implements Runnable{
       posEE.set(widgetOne.get_device_position(angles.array()));
       posEE.set(device_to_graphics(posEE)); 
       
-      
       /* haptic wall force calculation */
       fWall.set(0, 0);
-      
       
       // change force offsets for main vertical lines depending on tree type
       if (tree_state == "oak") {
         float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+        } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
           force_offset = force_offset + 0.005;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+        } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
           force_offset = force_offset + 0.02;
         }
         float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
@@ -324,11 +314,9 @@ class SimulationThread implements Runnable{
         float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+        } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
           force_offset = force_offset + 0.005;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+        } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
           force_offset = force_offset + 0.02;
         }
         float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
@@ -344,11 +332,9 @@ class SimulationThread implements Runnable{
         float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.03;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+        } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
           force_offset = force_offset + 0.04;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+        } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
           force_offset = force_offset + 0.04;
         }
         float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
@@ -364,11 +350,9 @@ class SimulationThread implements Runnable{
         float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+        } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
           force_offset = force_offset + 0.005;
-        }
-        else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+        } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
           force_offset = force_offset + 0.02;
         }
         float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
@@ -381,37 +365,26 @@ class SimulationThread implements Runnable{
         penWall.set(0, 1/((height_offset + force_offset)*1.5));
       }
       
-      
-      
-      
-      // no need to calculate everything at once - it introduces lag
-      
+      // No need to calculate everything at once - it introduces lag
       if (posEE.x > 0) { // right image
-      
-      
         float[][] line_endeffector_offsets = new float[allLinePositions.size()][4];
       
-        for (int i=0; i < allLinePositions.size(); i++) {
+        for (int i = 0; i < allLinePositions.size(); i++) {
           // x1 offset
-          line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
+          line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x * 4000.0 + right_image.width);
           // y1 offset
-          line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y*4000.0); 
+          line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y * 4000.0); 
           // x2 offset
-          line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x*4000.0 + right_image.width);
+          line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x * 4000.0 + right_image.width);
           // y2 offset
-          line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y*4000.0); 
+          line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y * 4000.0); 
         }
-      
-      
-      
       
         PVector[] lineForces = new PVector[allLinePositions.size()];
         for (int i=0; i < line_endeffector_offsets.length; i++) {
           // change force orientation depending on tree type
           lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall, 1); // 1 applies inward line force
         }
-      
-      
         // ensure only one vertical line can enact force upon the end effector at once
         for (int i=0; i < lineForces.length; i++) {
           if (lineForces[i].x != 0 || lineForces[i].y != 0) {
@@ -419,53 +392,50 @@ class SimulationThread implements Runnable{
             break;
           }
         }
+          
+        // change force offset for horizontal lines depending on tree type
+        if (tree_state == "oak") {
+          penWall.set(0, 10);
+        }
+        else if (tree_state == "cedar") {
+          penWall.set(0, 5);
+        }
+        else if (tree_state == "chestnut") {
+          penWall.set(5, 0);
+          if ((( posEE.x < 0.02) && (posEE.x > -0.02))){
+            penWall.set(1, 0);
+          }
+        }
+        else {
+          penWall.set(5, 0);
+        }
+      
+        float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.size()][4];
         
-      // change force offset for horizontal lines depending on tree type
-      if (tree_state == "oak") {
-        penWall.set(0, 10);
-      }
-      else if (tree_state == "cedar") {
-        penWall.set(0, 5);
-      }
-      else if (tree_state == "chestnut") {
-        penWall.set(5, 0);
-        if ((( posEE.x < 0.02) && (posEE.x > -0.02))){
-          penWall.set(1, 0);
+        for (int i=0; i < allHorLinePositions.size(); i++) {
+          // x1 offset
+          hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
+          // y1 offset
+          hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
+          // x2 offset
+          hor_line_endeffector_offsets[i][2] = allHorLinePositions.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+          // y2 offset
+          hor_line_endeffector_offsets[i][3] = allHorLinePositions.get(i)[3] - (posEE.y*4000.0); 
+        }
+      
+        PVector[] horLineForces = new PVector[allHorLinePositions.size()];
+        for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
+          horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall, 1);
+        }
+        
+        // Ensure horizontal force is off when crossing vertical lines
+        for (int i=0; i < horLineForces.length; i++) {
+          if (fWall.x == 0) {
+            fWall.add(horLineForces[i]);
+          }
         }
       }
-      else {
-        penWall.set(5, 0);
-      }
-      
-      float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.size()][4];
-      
-      for (int i=0; i < allHorLinePositions.size(); i++) {
-        // x1 offset
-        hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
-        // y1 offset
-        hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
-        // x2 offset
-        hor_line_endeffector_offsets[i][2] = allHorLinePositions.get(i)[2] - (posEE.x*4000.0 + left_image.width);
-        // y2 offset
-        hor_line_endeffector_offsets[i][3] = allHorLinePositions.get(i)[3] - (posEE.y*4000.0); 
-      }
-      
-      
-      PVector[] horLineForces = new PVector[allHorLinePositions.size()];
-      for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
-        horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall, 1);
-      }
-      
-      // ensure horizontal force is off when crossing vertical lines
-      for (int i=0; i < horLineForces.length; i++) {
-        if (fWall.x == 0) {
-          fWall.add(horLineForces[i]);
-        }
-      }
-      }
-      else { // left image
-      
-      
+      else { // Left image
         // change force offsets for grey lines depending on tree type
         if (tree_state == "oak") {
           float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
@@ -548,9 +518,6 @@ class SimulationThread implements Runnable{
           penWallGrey.set(1/((height_offset_grey + force_offset_grey)*2), 0);
         }
         
-        
-        
-      
         float[][] line_endeffector_offsets_left = new float[allLinePositions_left.size()][4];
       
         for (int i=0; i < allLinePositions_left.size(); i++) {
@@ -563,9 +530,6 @@ class SimulationThread implements Runnable{
           // y2 offset
           line_endeffector_offsets_left[i][3] = allLinePositions_left.get(i)[3] - (posEE.y*4000.0); 
         }
-      
-      
-      
       
         PVector[] lineForces_left = new PVector[allLinePositions_left.size()];
         for (int i=0; i < line_endeffector_offsets_left.length; i++) {
@@ -590,7 +554,6 @@ class SimulationThread implements Runnable{
         //  create_pantagraph();
         //}
         
-        
         float[][] line_endeffector_offsets_left_grey = new float[allLinePositions_left_grey.size()][4];
       
         for (int i=0; i < allLinePositions_left_grey.size(); i++) {
@@ -604,14 +567,10 @@ class SimulationThread implements Runnable{
           line_endeffector_offsets_left_grey[i][3] = allLinePositions_left_grey.get(i)[3] - (posEE.y*4000.0); 
         }
       
-      
-      
-      
         PVector[] lineForces_left_grey = new PVector[allLinePositions_left_grey.size()];
         for (int i=0; i < line_endeffector_offsets_left_grey.length; i++) {
           lineForces_left_grey[i] = calculate_line_force(line_endeffector_offsets_left_grey[i], penWallGrey, 1);
         }
-      
       
         // ensure only one vertical line can enact force upon the end effector at once
         for (int i=0; i < lineForces_left_grey.length; i++) {
@@ -620,30 +579,23 @@ class SimulationThread implements Runnable{
             break;
           }
         }
-      
       }
       
-   
       fEE = (fWall.copy()).mult(-1);
       fEE.set(graphics_to_device(fEE));
-      /* end haptic wall force calculation */
-     
-      
+      /* End haptic wall force calculation */
     }
-    
     
     torques.set(widgetOne.set_device_torques(fEE.array()));
     widgetOne.device_write_torques();
   
-    
-  
     renderingForce = false;
   }
 }
-/* end simulation section **********************************************************************************************/
+/* End simulation section **********************************************************************************************/
 
 
-/* helper functions section, place helper functions here ***************************************************************/
+/* Helper functions section, place helper functions here ***************************************************************/
 
 void process_image(String image) {
   // Reset to prevent the right image from moving away too far
@@ -658,7 +610,6 @@ void process_image(String image) {
 
   // For horizontal lines
   allHorLinePositions = new ArrayList<Integer[]>();
-  
   allLines = new ArrayList<PShape>();
 
   // Lines for left image
@@ -747,7 +698,7 @@ void process_image(String image) {
           PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
           temp.setStroke(color(0,0,150));
           
-          // add to list
+          // Add to list
           allLinePositions.add(curLinePos);
           allLines.add(temp);
         }
@@ -765,16 +716,16 @@ void process_image(String image) {
       float pixel = red(left_image.pixels[i + j * left_image.width]);
 
       // If pixel is black
-      if(pixel < 10){
-        if(black == 0){
+      if(pixel < 10) {
+        if(black == 0) {
           startJ = j;
         }
         black++;
       }
 
       // If pixel is not black
-      if(pixel >= 5 || j == left_image.height - 1){
-        if ((black >= threshold_grey) && (black < threshold)){
+      if (pixel >= 5 || j == left_image.height - 1) {
+        if ((black >= threshold_grey) && (black < threshold)) {
           Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
           PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
           //println(curLinePos);
@@ -784,7 +735,7 @@ void process_image(String image) {
           allLinePositions_left_grey.add(curLinePos);
           allLines_left_grey.add(temp);
         }
-        else if(black >= threshold){
+        else if (black >= threshold) {
           Integer[] curLinePos = {left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1};
           PShape temp = createShape(LINE, left_image_margin_x + i, left_image_margin_y + startJ, left_image_margin_x + i, left_image_margin_y + j - 1);
           temp.setStroke(color(0,0,150));
@@ -797,7 +748,7 @@ void process_image(String image) {
       }
     }
   }
-   
+  
   // Create horizontal lines for right image depending on tree type - vertical otherwise
   if (tree_state == "oak" || tree_state == "cedar") {
     for (int j = 0; j < left_image.height; j=j+20) {
@@ -839,7 +790,7 @@ void create_hor_line_graphics(PShape[] shapes, Float[][] positions) {
   }
 }
 
-void create_pantagraph(){
+void create_pantagraph() {
   float rEEAni = pixelsPerMeter * (rEE_vis/2);
   
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
@@ -868,7 +819,7 @@ PVector calculate_line_force(float[] offsets, PVector pen_wall, int direction) {
   return force;
 }
 
-PShape create_wall(float x1, float y1, float x2, float y2){
+PShape create_wall(float x1, float y1, float x2, float y2) {
   x1 = pixelsPerMeter * x1;
   y1 = pixelsPerMeter * y1;
   x2 = pixelsPerMeter * x2;
@@ -877,7 +828,7 @@ PShape create_wall(float x1, float y1, float x2, float y2){
   return createShape(LINE, deviceOrigin.x + x1, deviceOrigin.y + y1, deviceOrigin.x + x2, deviceOrigin.y+y2);
 }
 
-void update_animation(float th1, float th2, float xE, float yE){
+void update_animation(float th1, float th2, float xE, float yE) {
   //background(152,190,100);
   background(125);
 
@@ -946,11 +897,11 @@ void update_animation(float th1, float th2, float xE, float yE){
   shape(endEffector);
 }
 
-PVector device_to_graphics(PVector deviceFrame){
+PVector device_to_graphics(PVector deviceFrame) {
   return deviceFrame.set(-deviceFrame.x, deviceFrame.y);
 }
 
-PVector graphics_to_device(PVector graphicsFrame){
+PVector graphics_to_device(PVector graphicsFrame) {
   return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
 }
 
