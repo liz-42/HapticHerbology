@@ -1,28 +1,28 @@
 /**
- **********************************************************************************************************************
- * @file       bark_texture.pde
- * @author     Elizabeth Reid, modified from hello wall by Steve Ding, Colin Gallacher
- * @version    V3.0.0
- * @date       03-Febuary-2022
- * @brief      Maze example adapted from Hello Wall
- **********************************************************************************************************************
- * @attention
- *
- *
- **********************************************************************************************************************
- */
+**********************************************************************************************************************
+* @file       bark_texture.pde
+* @author     Elizabeth Reid, modified from hello wall by Steve Ding, Colin Gallacher
+* @version    V3.0.0
+* @date       03-Febuary-2022
+* @brief      Maze example adapted from Hello Wall
+**********************************************************************************************************************
+* @attention
+*
+*
+**********************************************************************************************************************
+*/
  
-  /* library imports *****************************************************************************************************/ 
+/* Library imports *****************************************************************************************************/ 
 import processing.serial.*;
 import static java.util.concurrent.TimeUnit.*;
 import java.util.concurrent.*;
-/* end library imports *************************************************************************************************/  
+/* End library imports *************************************************************************************************/  
 
-/* scheduler definition ************************************************************************************************/ 
+/* Scheduler definition ************************************************************************************************/ 
 private final ScheduledExecutorService scheduler      = Executors.newScheduledThreadPool(1);
-/* end scheduler definition ********************************************************************************************/ 
+/* End scheduler definition ********************************************************************************************/ 
 
-/* device block definitions ********************************************************************************************/
+/* Device block definitions ********************************************************************************************/
 Board             haplyBoard;
 Device            widgetOne;
 Mechanisms        pantograph;
@@ -31,76 +31,76 @@ byte              widgetOneID                         = 5;
 int               CW                                  = 0;
 int               CCW                                 = 1;
 boolean           renderingForce                     = false;
-/* end device block definition *****************************************************************************************/
+/* End device block definition *****************************************************************************************/
 
-/* framerate definition ************************************************************************************************/
+/* Framerate definition ************************************************************************************************/
 long              baseFrameRate                       = 180;
-/* end framerate definition ********************************************************************************************/ 
+/* End framerate definition ********************************************************************************************/ 
 
-/* elements definition *************************************************************************************************/
+/* Elements definition *************************************************************************************************/
 
 /* Screen and world setup parameters */
 float             pixelsPerMeter                      = 4000.0;
 float             radsPerDegree                       = 0.01745;
 
-/* pantagraph link parameters in meters */
+/* Pantagraph link parameters in meters */
 float             l                                   = 0.07;
 float             L                                   = 0.09;
 
-/* end effector radius in meters */
+/* End effector radius in meters */
 float             rEE                                 = 0.003;
 
-// end effector raduis for visuals
+// End effector raduis for visuals
 float             rEE_vis                             = 0.003;
 
-/* virtual wall parameter  */
+/* Virtual wall parameter  */
 float             kWall                               = 100;
 float             hWall                               = 0.015;
 float             hWall2                              = 0.005;
 PVector           fWall                               = new PVector(0, 0);
 PVector           penWall                             = new PVector(0, 0);
-// for grey lines
+// For grey lines
 PVector           penWallGrey                         = new PVector(0, 0);
 
-// for right image
+// For right image
 ArrayList<Integer[]> allLinePositions = new ArrayList<Integer[]>();
-// for left image
+// For left image
 ArrayList<Integer[]> allLinePositions_left = new ArrayList<Integer[]>();
 ArrayList<Integer[]> allLinePositions_left_grey = new ArrayList<Integer[]>();
 
-// for horizontal lines
+// For horizontal lines
 ArrayList<Integer[]> allHorLinePositions = new ArrayList<Integer[]>();
 
-/* generic data for a 2DOF device */
-/* joint space */
+/* Generic data for a 2DOF device */
+/* Joint space */
 PVector           angles                              = new PVector(0, 0);
 PVector           torques                             = new PVector(0, 0);
 
-/* task space */
+/* Task space */
 PVector           posEE                               = new PVector(0, 0);
 PVector           fEE                                 = new PVector(0, 0); 
 
 PVector posCursor = new PVector(-1,-1);
 PVector newPos = new PVector(0,0);
 
-/* device graphical position */
+/* Device graphical position */
 PVector           deviceOrigin                        = new PVector(0, 0);
 
 /* World boundaries reference */
 final int         worldPixelWidth                     = 1232;
 final int         worldPixelHeight                    = 650;
 
-/* graphical elements */
+/* Graphical elements */
 PShape pGraph, joint, endEffector, endEffector_1, endEffector_2, endEffector_3, endEffector_4;
 
-// all lines
+// All lines
 ArrayList<PShape> allLines = new ArrayList<PShape>();
 
-// lines for left image
+// Lines for left image
 ArrayList<PShape> allLines_left = new ArrayList<PShape>();
 ArrayList<PShape> allLines_left_grey = new ArrayList<PShape>();
 
-// horizontal lines
+// Horizontal lines
 ArrayList<PShape> allHorLines = new ArrayList<PShape>();              
 
 PImage render_image;
@@ -122,7 +122,7 @@ PShape[] right_image_lines = {};
 int screen_width = 1232;
 int screen_height = 650;
 
-// states for testing
+// States for testing
 String state = "regular";
 
 float[][] kernel = {{ -1, -1, -1}, 
@@ -134,7 +134,7 @@ float[][] kernel_blur = {{ v, v, v },
                          { v, v, v }, 
                          { v, v, v }};
 
-// file names for all the different trees
+// File names for all the different trees
 String original_image = "oak_bark.jpg";
 
 String aspen_1 = "aspen_1.jpg";
@@ -177,16 +177,16 @@ int force_render_technique = 1;
 
 boolean show_lines = false;
 
-/* end elements definition *********************************************************************************************/ 
+/* End elements definition *********************************************************************************************/ 
 
-/* setup section *******************************************************************************************************/
+/* Setup section *******************************************************************************************************/
 void setup() {
-  /* put setup code here, run once: */
+  /* Put setup code here, run once: */
   
-  /* screen size definition */
+  /* Screen size definition */
   size(1232, 650);
   
-  /* device setup */
+  /* Device setup */
   
   /**  
    * The board declaration needs to be changed depending on which USB serial port the Haply board is connected.
@@ -212,26 +212,26 @@ void setup() {
   
   widgetOne.device_set_parameters();
     
-  /* visual elements setup */
+  /* Visual elements setup */
   background(125);
   deviceOrigin.add(worldPixelWidth/2, 0);
   
-  /* create pantagraph graphics */
+  /* Create pantagraph graphics */
   create_pantagraph();
 
-  // get default height and width to use for all images
+  // Get default height and width to use for all images
   PImage temp = loadImage(original_image);
   
   default_width = temp.width;
   default_height = temp.height;
   
-  // calculates image lines and placement
+  // Calculates image lines and placement
   process_image(all_images[0]);
 
-  /* setup framerate speed */
+  /* Setup framerate speed */
   frameRate(baseFrameRate);
   
-  /* setup simulation thread to run at 1kHz */ 
+  /* Setup simulation thread to run at 1kHz */ 
   SimulationThread st = new SimulationThread();
   scheduler.scheduleAtFixedRate(st, 1, 1, MILLISECONDS);
 }
@@ -264,7 +264,7 @@ class SimulationThread implements Runnable {
       
       // change force offsets for main vertical lines depending on tree type
       if (tree_state == "oak") {
-        float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        float force_offset = 0.005 + abs(posEE.x) * 1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
         } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
@@ -272,9 +272,9 @@ class SimulationThread implements Runnable {
         } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
           force_offset = force_offset + 0.02;
         }
-        float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        float height_offset = (posEE.y + rEE)/1.75; // To account for the difference in force close and far from the motors
       
-        // adjustments to height offset
+        // Adjustments to height offset
         if (posEE.y < 0.03) {
           height_offset = height_offset + 0.05;
         }
@@ -282,7 +282,7 @@ class SimulationThread implements Runnable {
         penWall.set(1/(height_offset + force_offset), 0);
       }
       else if (tree_state == "cedar") {
-        float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        float force_offset = 0.005 + abs(posEE.x) * 1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
         } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
@@ -290,9 +290,9 @@ class SimulationThread implements Runnable {
         } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
           force_offset = force_offset + 0.02;
         }
-        float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        float height_offset = (posEE.y + rEE)/1.75; // To account for the difference in force close and far from the motors
       
-        // adjustments to height offset
+        // Adjustments to height offset
         if (posEE.y < 0.03) {
           height_offset = height_offset + 0.05;
         }
@@ -300,7 +300,7 @@ class SimulationThread implements Runnable {
         penWall.set(1/((height_offset + force_offset)*1.25), 0);
       }
       else if (tree_state == "chestnut") {
-        float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        float force_offset = 0.005 + abs(posEE.x) * 1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.03;
         } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
@@ -308,9 +308,9 @@ class SimulationThread implements Runnable {
         } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
           force_offset = force_offset + 0.04;
         }
-        float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        float height_offset = (posEE.y + rEE)/1.75; // To account for the difference in force close and far from the motors
       
-        // adjustments to height offset
+        // Adjustments to height offset
         if (posEE.y < 0.03) {
           height_offset = height_offset + 0.05;
         }
@@ -318,7 +318,7 @@ class SimulationThread implements Runnable {
         penWall.set(0, 1/(height_offset + force_offset));
       }
       else { // Aspen
-        float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+        float force_offset = 0.005 + abs(posEE.x)*1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
         } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
@@ -326,9 +326,9 @@ class SimulationThread implements Runnable {
         } else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
           force_offset = force_offset + 0.02;
         }
-        float height_offset = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        float height_offset = (posEE.y + rEE)/1.75; // To account for the difference in force close and far from the motors
       
-        // adjustments to height offset
+        // Adjustments to height offset
         if (posEE.y < 0.03) {
           height_offset = height_offset + 0.05;
         }
@@ -364,20 +364,17 @@ class SimulationThread implements Runnable {
             }
           }
             
-          // change force offset for horizontal lines depending on tree type
+          // Change force offset for horizontal lines depending on tree type
           if (tree_state == "oak") {
             penWall.set(0, 10);
-          }
-          else if (tree_state == "cedar") {
+          } else if (tree_state == "cedar") {
             penWall.set(0, 5);
-          }
-          else if (tree_state == "chestnut") {
+          } else if (tree_state == "chestnut") {
             penWall.set(5, 0);
             if ((( posEE.x < 0.02) && (posEE.x > -0.02))){
               penWall.set(1, 0);
             }
-          }
-          else {
+          } else { // Aspen
             penWall.set(5, 0);
           }
         
@@ -695,24 +692,11 @@ void process_image(String image) {
   }
 }
 
-void create_line_graphics(PShape[] shapes, Float[][] positions) {
-  for(int i=0; i < shapes.length; i++) {
-    shapes[i] = create_wall(positions[i][0], positions[i][1], positions[i][2], positions[i][3]); 
-    shapes[i].setStroke(color(150,0,0));
-  }
-}
-
-void create_hor_line_graphics(PShape[] shapes, Float[][] positions) {
-  for(int i=0; i < shapes.length; i++) {
-    shapes[i] = create_wall(positions[i][0], positions[i][1], positions[i][2], positions[i][3]); 
-    shapes[i].setStroke(color(0,0,150));
-  }
-}
-
 void create_pantagraph() {
   float rEEAni = pixelsPerMeter * (rEE_vis/2);
   
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
+  endEffector.setFill(color(255, 255, 0));
   endEffector_1 = createShape(ELLIPSE, deviceOrigin.x - 283 * 1.5 - left_margin_image_1 * 1.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
   endEffector_2 = createShape(ELLIPSE, deviceOrigin.x - 283 * 0.5 - left_margin_image_1 * 0.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
   endEffector_3 = createShape(ELLIPSE, deviceOrigin.x + 283 * 0.5 + left_margin_image_1 * 0.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
@@ -738,15 +722,6 @@ PVector calculate_line_force(float[] offsets, PVector pen_wall, int direction) {
   //  println(offsets);
   //}
   return force;
-}
-
-PShape create_wall(float x1, float y1, float x2, float y2) {
-  x1 = pixelsPerMeter * x1;
-  y1 = pixelsPerMeter * y1;
-  x2 = pixelsPerMeter * x2;
-  y2 = pixelsPerMeter * y2;
-  
-  return createShape(LINE, deviceOrigin.x + x1, deviceOrigin.y + y1, deviceOrigin.x + x2, deviceOrigin.y+y2);
 }
 
 void updateImages(){
@@ -850,7 +825,7 @@ PVector graphics_to_device(PVector graphicsFrame) {
   return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
 }
 
-// change state when any key pressed
+// Change state when any key pressed
 void keyPressed() {
   println("keyPressed", keyCode);
 
