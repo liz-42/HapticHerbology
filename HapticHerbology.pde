@@ -97,8 +97,8 @@ PVector newPos = new PVector(0,0);
 PVector           deviceOrigin                        = new PVector(0, 0);
 
 /* World boundaries reference */
-final int         worldPixelWidth                     = 650; //1000;
-final int         worldPixelHeight                    = 584; //650;
+final int         worldPixelWidth                     = 1000;
+final int         worldPixelHeight                    = 650;
 
 /* graphical elements */
 PShape pGraph, joint, endEffector;
@@ -119,18 +119,17 @@ PImage bark_detailed;
 PImage bark_BAW;
 PImage bark_GREY;
 
-PImage temp_image;
 PImage left_image;
 int left_image_margin_x = 20;
 int left_image_margin_y = 80;
 
-PImage right_image;
-int right_image_margin_x = left_image_margin_x + 40;
-int right_image_margin_y = left_image_margin_y;
+// PImage right_image;
+// int right_image_margin_x = left_image_margin_x + 40;
+// int right_image_margin_y = left_image_margin_y;
 
 // colour versions
 PImage left_image_colour;
-PImage right_image_colour;
+// PImage right_image_colour;
 
 PShape[] right_image_lines = {};
 
@@ -197,7 +196,7 @@ void setup() {
   /* put setup code here, run once: */
   
   /* screen size definition */
-  size(650, 584);
+  size(1000, 650);
   
   /* device setup */
   
@@ -330,7 +329,7 @@ class SimulationThread implements Runnable {
 
         penWall.set(0, 1/(height_offset + force_offset));
       }
-      else {
+      else { // Aspen
         float force_offset = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
@@ -355,11 +354,11 @@ class SimulationThread implements Runnable {
         
           for (int i = 0; i < allLinePositions.size(); i++) {
             // x1 offset
-            line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x * 4000.0 + right_image.width);
+            line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x * 4000.0 + left_image.width);
             // y1 offset
             line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y * 4000.0); 
             // x2 offset
-            line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x * 4000.0 + right_image.width);
+            line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x * 4000.0 + left_image.width);
             // y2 offset
             line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y * 4000.0); 
           }
@@ -398,7 +397,7 @@ class SimulationThread implements Runnable {
           
           for (int i=0; i < allHorLinePositions.size(); i++) {
             // x1 offset
-            hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
+            hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + left_image.width);
             // y1 offset
             hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
             // x2 offset
@@ -589,11 +588,12 @@ class SimulationThread implements Runnable {
 
 void process_image(String image) {
   // Reset to prevent the right image from moving away too far
-  right_image_margin_x = left_image_margin_x + 40;
-  right_image_margin_y = left_image_margin_y;
+  // right_image_margin_x = left_image_margin_x + 40;
+  // right_image_margin_y = left_image_margin_y;
   
   // Reset line arrays 
   allLinePositions = new ArrayList<Integer[]>();
+
   // For left image
   allLinePositions_left = new ArrayList<Integer[]>();
   allLinePositions_left_grey = new ArrayList<Integer[]>();
@@ -611,42 +611,42 @@ void process_image(String image) {
 
   // Load images
   left_image = loadImage(image);
-  right_image = loadImage(image);
+  // right_image = loadImage(image);
   
   // Colour images
   left_image_colour = loadImage(image);
-  right_image_colour = loadImage(image);
+  // right_image_colour = loadImage(image);
   
   // Resize if needed
   if (left_image.width != default_width || left_image.height != default_height) {
     left_image.resize(default_width, default_height);
-    right_image.resize(default_width, default_height);
+    // right_image.resize(default_width, default_height);
     left_image_colour.resize(default_width, default_height);
-    right_image_colour.resize(default_width, default_height);
+    // right_image_colour.resize(default_width, default_height);
   }
   
   // Original images
-  right_image_margin_x += left_image.width;
+  // right_image_margin_x += left_image.width;
 
   left_image.loadPixels();
-  right_image.loadPixels();
+  // right_image.loadPixels();
   
   float sum = 0;
   float count = 0;
 
   // Determine average 
-  for (int y = 0; y < right_image.height; y++){
-     for (int x = 0; x < right_image.width; x++){
-        sum += red(right_image.pixels[y + x * right_image.width]);
-        count++;
-     }
-  }
+  // for (int y = 0; y < right_image.height; y++){
+  //    for (int x = 0; x < right_image.width; x++){
+  //       sum += red(right_image.pixels[y + x * right_image.width]);
+  //       count++;
+  //    }
+  // }
    
   // If the average is higher than 125, then the image likely contains more small black lines
   int threshold = 10;
   int threshold_grey = 3; // For the smaller lines
 
-  right_image.filter(THRESHOLD);
+  // right_image.filter(THRESHOLD);
   left_image.filter(THRESHOLD);
   
   // Lower the threshold for aspen trees
@@ -667,35 +667,35 @@ void process_image(String image) {
   int black = 0;
   int startJ = 0;
   
-  for (int i = 0; i < right_image.width; i++) {
-    black = 0;
-    startJ = 0;
-    for (int j = 0; j < right_image.height; j++) {
-      float pixel = red(right_image.pixels[i + j * right_image.width]);
+  // for (int i = 0; i < right_image.width; i++) {
+  //   black = 0;
+  //   startJ = 0;
+  //   for (int j = 0; j < right_image.height; j++) {
+  //     float pixel = red(right_image.pixels[i + j * right_image.width]);
 
-      // If pixel is black
-      if(pixel < 10){
-        if(black == 0){
-          startJ = j;
-        }
-        black++;
-      }
+  //     // If pixel is black
+  //     if(pixel < 10){
+  //       if(black == 0){
+  //         startJ = j;
+  //       }
+  //       black++;
+  //     }
 
-      // If pixel is not black
-      if(pixel >= 5 || j == right_image.height - 1){
-        if(black >= threshold){
-          Integer[] curLinePos = {right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1};
-          PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
-          temp.setStroke(color(0,0,150));
+  //     // If pixel is not black
+  //     if(pixel >= 5 || j == right_image.height - 1){
+  //       if(black >= threshold){
+  //         Integer[] curLinePos = {right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1};
+  //         PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
+  //         temp.setStroke(color(0,0,150));
           
-          // Add to list
-          allLinePositions.add(curLinePos);
-          allLines.add(temp);
-        }
-        black = 0;
-      }
-    }
-  }
+  //         // Add to list
+  //         allLinePositions.add(curLinePos);
+  //         allLines.add(temp);
+  //       }
+  //       black = 0;
+  //     }
+  //   }
+  // }
    
   // Left image
   black = 0;
@@ -733,17 +733,22 @@ void process_image(String image) {
           // add to list
           allLinePositions_left.add(curLinePos);
           allLines_left.add(temp);
+
+          
+          allLinePositions.add(curLinePos);
+          allLines.add(temp);
         }
           black = 0;
       }
     }
+    
   }
   
   // Create horizontal lines for right image depending on tree type - vertical otherwise
   if (tree_state == "oak" || tree_state == "cedar") {
     for (int j = 0; j < left_image.height; j=j+20) {
-      Integer[] curLinePos = {right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j};
-      PShape temp = createShape(LINE, right_image_margin_x, right_image_margin_y + j, right_image_margin_x + right_image.width, right_image_margin_y + j);
+      Integer[] curLinePos = {left_image_margin_x, left_image_margin_y + j, left_image_margin_x + left_image.width, left_image_margin_y + j};
+      PShape temp = createShape(LINE, left_image_margin_x, left_image_margin_y + j, left_image_margin_x + left_image.width, left_image_margin_y + j);
       //println(curLinePos);
       temp.setStroke(color(0,0,150));
         
@@ -754,8 +759,8 @@ void process_image(String image) {
   }
   else {
     for (int j = 0; j < left_image.width; j=j+20) {
-      Integer[] curLinePos = {right_image_margin_x + j, right_image_margin_y, right_image_margin_x + j, right_image_margin_y + right_image.height};
-      PShape temp = createShape(LINE, right_image_margin_x + j, right_image_margin_y, right_image_margin_x + j, right_image_margin_y + right_image.height);
+      Integer[] curLinePos = {left_image_margin_x + j, left_image_margin_y, left_image_margin_x + j, left_image_margin_y + left_image.height};
+      PShape temp = createShape(LINE, left_image_margin_x + j, left_image_margin_y, left_image_margin_x + j, left_image_margin_y + left_image.height);
       //println(curLinePos);
       temp.setStroke(color(0,0,150));
         
@@ -819,7 +824,6 @@ PShape create_wall(float x1, float y1, float x2, float y2) {
 }
 
 void update_animation(float th1, float th2, float xE, float yE) {
-  //background(152,190,100);
   background(125);
 
   xE = pixelsPerMeter * xE;
@@ -827,7 +831,7 @@ void update_animation(float th1, float th2, float xE, float yE) {
   
   if (state == "lines") {
     image(left_image, left_image_margin_x, left_image_margin_y);
-    image(right_image, right_image_margin_x, right_image_margin_y);
+    // image(right_image, right_image_margin_x, right_image_margin_y);
     for(int i=0; i < allLines.size(); i++) {
         shape(allLines.get(i));
     }
@@ -842,29 +846,17 @@ void update_animation(float th1, float th2, float xE, float yE) {
     }
   }
   else if (state == "simple_image") {
-    //image(bark_template, 350, 150);
-    // background(bark_template);
     image(left_image, left_image_margin_x, left_image_margin_y);
-    image(right_image, right_image_margin_x, right_image_margin_y);
+    // image(right_image, right_image_margin_x, right_image_margin_y);
   }
   else if (state == "detailed_image") {
-    // background(bark_detailed);
-    //image(bark_detailed, 350, 150);
-    image(right_image_colour, right_image_margin_x, right_image_margin_y);
     image(left_image_colour, left_image_margin_x, left_image_margin_y);
-  } else if (state == "blackandwhite"){
-    // background(bark_BAW);
-  } else if (state == "greyscale"){
-    // background(bark_GREY);
+    // image(right_image_colour, right_image_margin_x, right_image_margin_y);
   }
   
-  
-    
-   
-
   textSize(48);
   text("Image #1", left_image_margin_x, left_image_margin_y * 2 / 3);
-  text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
+  // text("Image #2", right_image_margin_x, right_image_margin_y * 2 / 3);
 
   //  textSize(20);
   //  text("This image has a gradient", left_image_margin_x, left_image_margin_y + left_image.height + 40);
@@ -872,15 +864,15 @@ void update_animation(float th1, float th2, float xE, float yE) {
   
   
   // show the auto generated lines
-  for(int i=0; i < allLines.size(); i++) {
-     shape(allLines.get(i));
-  }
-  for(int i=0; i < allLines_left.size(); i++) {
-     shape(allLines_left.get(i));
-  }
-  for(int i=0; i < allLines_left_grey.size(); i++) {
-     shape(allLines_left_grey.get(i));
-  }
+  // for(int i=0; i < allLines.size(); i++) {
+  //    shape(allLines.get(i));
+  // }
+  // for(int i=0; i < allLines_left.size(); i++) {
+  //    shape(allLines_left.get(i));
+  // }
+  // for(int i=0; i < allLines_left_grey.size(); i++) {
+  //    shape(allLines_left_grey.get(i));
+  // }
   
   
   translate(xE, yE);
