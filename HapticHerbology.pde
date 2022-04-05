@@ -47,7 +47,7 @@ long              baseFrameRate                       = 180;
 /* elements definition *************************************************************************************************/
 
 /* Screen and world setup parameters */
-float             pixelsPerMeter                      = 4000.0;
+float             pixelsPerMeter                      = 8000.0;
 float             radsPerDegree                       = 0.01745;
 
 /* pantagraph link parameters in meters */
@@ -97,8 +97,8 @@ PVector newPos = new PVector(0,0);
 PVector           deviceOrigin                        = new PVector(0, 0);
 
 /* World boundaries reference */
-final int         worldPixelWidth                     = 650; //1000;
-final int         worldPixelHeight                    = 584; //650;
+final int         worldPixelWidth                     = 1300; //1000;
+final int         worldPixelHeight                    = 650; //650;
 
 
 /* graphical elements */
@@ -128,7 +128,7 @@ PImage bark_GREY;
 PImage temp_image;
 PImage left_image;
 int left_image_margin_x = 20;
-int left_image_margin_y = 80;
+int left_image_margin_y = 200;
 
 PImage right_image;
 int right_image_margin_x = left_image_margin_x + 40;
@@ -142,8 +142,8 @@ PImage right_image_colour;
 PShape[] right_image_lines = {};
 
 
-int screen_width = 650;
-int screen_height = 584;
+int screen_width = 1300;
+int screen_height = 650;
 // states for testing
 //String state = "lines";
 String state = "simple_image";
@@ -217,7 +217,7 @@ void setup(){
   /* put setup code here, run once: */
   
   /* screen size definition */
-  size(650, 584);
+  size(1300, 650);
   
   /* device setup */
   
@@ -287,6 +287,8 @@ class SimulationThread implements Runnable{
   
   public void run(){
     /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
+    
+    //println(posEE.x * pixelsPerMeter);
     
     renderingForce = true;
     
@@ -397,13 +399,13 @@ class SimulationThread implements Runnable{
       
         for (int i=0; i < allLinePositions.size(); i++) {
           // x1 offset
-          line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
+          line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x*pixelsPerMeter + right_image.width);
           // y1 offset
-          line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y*4000.0); 
+          line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y*pixelsPerMeter); 
           // x2 offset
-          line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x*4000.0 + right_image.width);
+          line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x*pixelsPerMeter + right_image.width);
           // y2 offset
-          line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y*4000.0); 
+          line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y*pixelsPerMeter); 
         }
       
       
@@ -445,13 +447,13 @@ class SimulationThread implements Runnable{
       
       for (int i=0; i < allHorLinePositions.size(); i++) {
         // x1 offset
-        hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + right_image.width);
+        hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*pixelsPerMeter + right_image.width);
         // y1 offset
-        hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
+        hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*pixelsPerMeter); 
         // x2 offset
-        hor_line_endeffector_offsets[i][2] = allHorLinePositions.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+        hor_line_endeffector_offsets[i][2] = allHorLinePositions.get(i)[2] - (posEE.x*pixelsPerMeter + left_image.width);
         // y2 offset
-        hor_line_endeffector_offsets[i][3] = allHorLinePositions.get(i)[3] - (posEE.y*4000.0); 
+        hor_line_endeffector_offsets[i][3] = allHorLinePositions.get(i)[3] - (posEE.y*pixelsPerMeter); 
       }
       
       
@@ -559,13 +561,13 @@ class SimulationThread implements Runnable{
       
         for (int i=0; i < allLinePositions_left.size(); i++) {
           // x1 offset
-          line_endeffector_offsets_left[i][0] = allLinePositions_left.get(i)[0] - (posEE.x*4000.0 + left_image.width);
+          line_endeffector_offsets_left[i][0] = allLinePositions_left.get(i)[0] - (posEE.x*pixelsPerMeter + left_image.width);
           // y1 offset
-          line_endeffector_offsets_left[i][1] = allLinePositions_left.get(i)[1] - (posEE.y*4000.0); 
+          line_endeffector_offsets_left[i][1] = allLinePositions_left.get(i)[1] - (posEE.y*pixelsPerMeter); 
           // x2 offset
-          line_endeffector_offsets_left[i][2] = allLinePositions_left.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+          line_endeffector_offsets_left[i][2] = allLinePositions_left.get(i)[2] - (posEE.x*pixelsPerMeter + left_image.width);
           // y2 offset
-          line_endeffector_offsets_left[i][3] = allLinePositions_left.get(i)[3] - (posEE.y*4000.0); 
+          line_endeffector_offsets_left[i][3] = allLinePositions_left.get(i)[3] - (posEE.y*pixelsPerMeter); 
         }
       
       
@@ -599,13 +601,13 @@ class SimulationThread implements Runnable{
       
         for (int i=0; i < allLinePositions_left_grey.size(); i++) {
           // x1 offset
-          line_endeffector_offsets_left_grey[i][0] = allLinePositions_left_grey.get(i)[0] - (posEE.x*4000.0 + left_image.width);
+          line_endeffector_offsets_left_grey[i][0] = allLinePositions_left_grey.get(i)[0] - (posEE.x*pixelsPerMeter + left_image.width);
           // y1 offset
-          line_endeffector_offsets_left_grey[i][1] = allLinePositions_left_grey.get(i)[1] - (posEE.y*4000.0); 
+          line_endeffector_offsets_left_grey[i][1] = allLinePositions_left_grey.get(i)[1] - (posEE.y*pixelsPerMeter); 
           // x2 offset
-          line_endeffector_offsets_left_grey[i][2] = allLinePositions_left_grey.get(i)[2] - (posEE.x*4000.0 + left_image.width);
+          line_endeffector_offsets_left_grey[i][2] = allLinePositions_left_grey.get(i)[2] - (posEE.x*pixelsPerMeter + left_image.width);
           // y2 offset
-          line_endeffector_offsets_left_grey[i][3] = allLinePositions_left_grey.get(i)[3] - (posEE.y*4000.0); 
+          line_endeffector_offsets_left_grey[i][3] = allLinePositions_left_grey.get(i)[3] - (posEE.y*pixelsPerMeter); 
         }
       
       
@@ -755,7 +757,7 @@ void process_image(String image) {
       if(pixel >= 5 || j == right_image.height-1){
         if(black >= threshold){
           lines++;
-          Integer[] curLinePos = {right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1};
+          Integer[] curLinePos = {right_image_margin_x + i - 650, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1};
           PShape temp = createShape(LINE, right_image_margin_x + i, right_image_margin_y + startJ, right_image_margin_x + i, right_image_margin_y + j - 1);
           //println(curLinePos);
           temp.setStroke(color(0,0,150));
@@ -902,7 +904,7 @@ void create_lines_from_image(){
 }
 
 void create_pantagraph(){
-  float rEEAni = pixelsPerMeter * (rEE_vis/2);
+  float rEEAni = pixelsPerMeter/2 * (rEE_vis/2);
   
   //fill(127,0,0);
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
