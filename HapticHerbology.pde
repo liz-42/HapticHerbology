@@ -263,6 +263,7 @@ class SimulationThread implements Runnable {
       fWall.set(0, 0);
       
       // change force offsets for main vertical lines depending on tree type
+      //println(posEE.x, posEE.y);
       if (tree_state == "oak") {
         float force_offset = 0.005 + abs(posEE.x) * 1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
@@ -333,7 +334,7 @@ class SimulationThread implements Runnable {
           height_offset = height_offset + 0.05;
         }
 
-        penWall.set(0, 1/((height_offset + force_offset)*1.5));
+        penWall.set(0, 1/((height_offset + force_offset)*2));
       }
 
       switch (force_render_technique) {
@@ -417,14 +418,14 @@ class SimulationThread implements Runnable {
             else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
               force_offset_grey = force_offset_grey + 0.03;
             }
-            float height_offset_grey = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+            float height_offset_grey = (posEE.y + rEE)/1.0; // to account for the difference in force close and far from the motors
         
             // adjustments to height offset
             if (posEE.y < 0.03) {
               height_offset_grey = height_offset_grey + 0.05;
             }
 
-            penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
+            penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*4));
           }
           else if (tree_state == "cedar") {
             float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
@@ -804,19 +805,19 @@ void update_animation(float th1, float th2, float xE, float yE) {
 
     switch (force_render_technique) {
       case 1:
-        for(int i=0; i < allLines_left.size(); i++) {
-          shape(allLines_left.get(i));
-        }
-        for(int i=0; i < allLines_left_grey.size(); i++) {
-          shape(allLines_left_grey.get(i));
+        for(int i=0; i < allLines.size(); i++) {
+          shape(allLines.get(i));
         }
         for(int i=0; i < allHorLines.size(); i++) {
           shape(allHorLines.get(i));
         }
         break;
       case 2:
-        for(int i=0; i < allLines.size(); i++) {
-          shape(allLines.get(i));
+        for(int i=0; i < allLines_left.size(); i++) {
+          shape(allLines_left.get(i));
+        }
+        for(int i=0; i < allLines_left_grey.size(); i++) {
+          shape(allLines_left_grey.get(i));
         }
         for(int i=0; i < allHorLines.size(); i++) {
           shape(allHorLines.get(i));
