@@ -19,7 +19,7 @@ import java.util.concurrent.*;
 /* End library imports *************************************************************************************************/  
 
 /* Scheduler definition ************************************************************************************************/ 
-private final ScheduledExecutorService scheduler      = Executors.newScheduledThreadPool(1);
+private ScheduledExecutorService scheduler      = Executors.newScheduledThreadPool(1);
 /* End scheduler definition ********************************************************************************************/ 
 
 /* Device block definitions ********************************************************************************************/
@@ -175,6 +175,10 @@ String tree_state = "oak";
 // Rendering forces technique
 int force_render_technique = 1;
 
+SimulationThread st = new SimulationThread();
+boolean changed_state = false;
+int time_with_forces = 0;
+
 boolean show_lines = false;
 
 /* End elements definition *********************************************************************************************/ 
@@ -232,7 +236,6 @@ void setup() {
   frameRate(baseFrameRate);
   
   /* Setup simulation thread to run at 1kHz */ 
-  SimulationThread st = new SimulationThread();
   scheduler.scheduleAtFixedRate(st, 1, 1, MILLISECONDS);
 }
 /* end setup section ***************************************************************************************************/
@@ -240,7 +243,19 @@ void setup() {
 /* draw section ********************************************************************************************************/
 void draw() {
   /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
-  update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
+  if (renderingForce == false) {
+    update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
+  }
+  if (changed_state && time_with_forces == 0) {
+    scheduler.shutdown();
+    st = new SimulationThread();
+    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler.scheduleAtFixedRate(st, 1, 1, MILLISECONDS);
+    changed_state = false;
+
+    println("force reset");
+  }
+  
 }
 /* end draw section ****************************************************************************************************/
 
@@ -250,6 +265,8 @@ class SimulationThread implements Runnable {
     /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
     
     renderingForce = true;
+    
+    time_with_forces++;
     
     if(haplyBoard.data_available()) {
       /* GET END-EFFECTOR STATE (TASK SPACE) */
@@ -877,21 +894,29 @@ void keyPressed() {
     tree_state = "oak";
     all_images = oak_trees;
     process_image(all_images[cur_image]);
+    time_with_forces = 0;
+    changed_state = true;
   }
   else if (keyCode == 67) { // c
     tree_state = "cedar";
     all_images = cedar_trees;
     process_image(all_images[cur_image]);
+    time_with_forces = 0;
+    changed_state = true;
   }
   else if (keyCode == 72) { // h
     tree_state = "chestnut";
     all_images = chestnut_trees;
     process_image(all_images[cur_image]);
+    time_with_forces = 0;
+    changed_state = true;
   }
   else if (keyCode == 65) { // a
     tree_state = "aspen";
     all_images = aspen_trees;
     process_image(all_images[cur_image]);
+    time_with_forces = 0;
+    changed_state = true;
   }
 
   // Change images using Right and left arrow keys
