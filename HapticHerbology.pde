@@ -78,17 +78,10 @@ PVector           torques                             = new PVector(0, 0);
 
 /* Task space */
 PVector           posEE                               = new PVector(0, 0);
-PVector           fEE                                 = new PVector(0, 0); 
-
-PVector posCursor = new PVector(-1,-1);
-PVector newPos = new PVector(0,0);
+PVector           fEE                                 = new PVector(0, 0);
 
 /* Device graphical position */
 PVector           deviceOrigin                        = new PVector(0, 0);
-
-/* World boundaries reference */
-final int         worldPixelWidth                     = 1232;
-final int         worldPixelHeight                    = 650;
 
 /* Graphical elements */
 PShape pGraph, joint, endEffector, endEffector_1, endEffector_2, endEffector_3, endEffector_4;
@@ -107,7 +100,7 @@ PImage render_image;
 int render_image_margin_x = 475;
 int render_image_margin_y = 100;
 
-int top_margin_images = 100;
+int top_margin_images = 300;
 PImage image_1;
 int left_margin_image_1 = 20;
 PImage image_2;
@@ -118,21 +111,6 @@ PImage image_4;
 int left_margin_image_4 = 80;
 
 PShape[] right_image_lines = {};
-
-int screen_width = 1232;
-int screen_height = 650;
-
-// States for testing
-String state = "regular";
-
-float[][] kernel = {{ -1, -1, -1}, 
-                    { -1,  9, -1}, 
-                    { -1, -1, -1}};
-
-float v = 1.0 / 9.0;
-float[][] kernel_blur = {{ v, v, v }, 
-                         { v, v, v }, 
-                         { v, v, v }};
 
 // File names for all the different trees
 String original_image = "oak_bark.jpg";
@@ -163,6 +141,14 @@ String[] chestnut_trees = {horse_chestnut_1, horse_chestnut_2, horse_chestnut_3,
 String[] cedar_trees = {cedar_1, cedar_2, cedar_3, cedar_4};
 String[] oak_trees = {oak_1, oak_2, oak_3, oak_4};
 
+// Arrays for different facts
+String[] aspect_facts = {"aspect_facts 1", "aspect_facts 2"};
+String[] chestnut_facts = {"chestnut_facts 1", "chestnut_facts 2"};
+String[] cedar_facts = {"cedar_facts 1", "cedar_facts 2"};
+String[] oak_facts = {"oak_facts 1", "oak_facts 2"};
+
+IntList combinations = new IntList();
+
 // Array to switch between images with arrow keys
 String[] all_images = oak_trees;
 int cur_image = 0;
@@ -179,7 +165,17 @@ SimulationThread st = new SimulationThread();
 boolean changed_state = false;
 int time_with_forces = 0;
 
+// States for testing
+String state = "regular";
 boolean show_lines = false;
+
+boolean is_experiment_active = false;
+boolean game_over = false;
+float theta; // For tree
+float intro_tree_timer = 0;
+boolean intro_tree_direction = true;
+
+PFont font;
 
 /* End elements definition *********************************************************************************************/ 
 
@@ -188,10 +184,13 @@ void setup() {
   /* Put setup code here, run once: */
   
   /* Screen size definition */
-  size(1232, 650);
+  size(1232, 750);
   
+  printArray(PFont.list());
+  font = createFont("Georgia", 32, true);
+  textFont(font);
+
   /* Device setup */
-  
   /**  
    * The board declaration needs to be changed depending on which USB serial port the Haply board is connected.
    * In the base example, a connection is setup to the first detected serial device, this parameter can be changed
@@ -202,23 +201,20 @@ void setup() {
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
   
-  haplyBoard          = new Board(this, "COM4", 0);
+  haplyBoard          = new Board(this, "COM7", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
   widgetOne.set_mechanism(pantograph);
-  
   widgetOne.add_actuator(1, CCW, 2);
   widgetOne.add_actuator(2, CW, 1);
-
   widgetOne.add_encoder(1, CCW, 241, 10752, 2);
   widgetOne.add_encoder(2, CW, -61, 10752, 1);
-  
   widgetOne.device_set_parameters();
     
   /* Visual elements setup */
   background(125);
-  deviceOrigin.add(worldPixelWidth/2, 0);
+  deviceOrigin.add(width/2, 0);
   
   /* Create pantagraph graphics */
   create_pantagraph();
@@ -229,8 +225,7 @@ void setup() {
   default_width = temp.width;
   default_height = temp.height;
   
-  // Calculates image lines and placement
-  process_image(all_images[0]);
+  init_combinations();
 
   /* Setup framerate speed */
   frameRate(baseFrameRate);
@@ -242,20 +237,34 @@ void setup() {
 
 /* draw section ********************************************************************************************************/
 void draw() {
-  /* put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
-  if (renderingForce == false) {
-    update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
-  }
-  if (changed_state && time_with_forces == 0) {
-    scheduler.shutdown();
-    st = new SimulationThread();
-    scheduler = Executors.newScheduledThreadPool(1);
-    scheduler.scheduleAtFixedRate(st, 1, 1, MILLISECONDS);
-    changed_state = false;
+  // Things displayed when experiment is going
+  if (is_experiment_active) {
+    /* Put graphical code here, runs repeatedly at defined framerate in setup, else default at 60fps: */
+    if (renderingForce == false) {
+      update_animation(angles.x*radsPerDegree, angles.y*radsPerDegree, posEE.x, posEE.y);
+    }
 
-    println("force reset");
+    if (changed_state && time_with_forces == 0) {
+      scheduler.shutdown();
+      st = new SimulationThread();
+      scheduler = Executors.newScheduledThreadPool(1);
+      scheduler.scheduleAtFixedRate(st, 1, 1, MILLISECONDS);
+      changed_state = false;
+
+      println("force reset");
+    }
   }
-  
+  // Things displayed when experiment is not 'going'
+  else {
+    // Intro
+    if (!game_over) {
+      update_intro();
+    } 
+    // Conclusion
+    else {
+      update_conclusion();
+    }
+  }
 }
 /* end draw section ****************************************************************************************************/
 
@@ -263,7 +272,10 @@ void draw() {
 class SimulationThread implements Runnable {
   public void run() {
     /* put haptic simulation code here, runs repeatedly at 1kHz as defined in setup */
-    
+    if (!is_experiment_active)
+      return;
+
+
     renderingForce = true;
     
     time_with_forces++;
@@ -588,11 +600,30 @@ class SimulationThread implements Runnable {
 
 
 /* Helper functions section, place helper functions here ***************************************************************/
+void init_combinations() {
+  combinations = new IntList();
+  int count_render_techniques = 3;
+  int count_types_trees = 4;
+  int count_images_per_tree_type = 4;
+
+  for (int i = 1; i <= count_render_techniques; ++i) {
+    for (int j = 1; j < count_types_trees; ++j) {
+      for (int k = 1; k < count_images_per_tree_type; ++k) {
+        combinations.append(i * 1000 + j * 100 + k);
+      }
+    }
+  }
+}
+
+void start_experiment() {
+  
+  // Calculates image lines and placement
+  process_image(all_images[0]);
+}
 
 void process_image(String image) {
-  // variable to make sure the line forces are actually rendered in the right spot
+  // Variable to make sure the line forces are actually rendered in the right spot
   int force_centering = 290;
-  
   
   // Reset line arrays 
   allLinePositions = new ArrayList<Integer[]>();
@@ -712,21 +743,6 @@ void process_image(String image) {
       allHorLines.add(temp);
     }
   }
-  
-  //// only render one line for now to make sure it's working
-  //ArrayList<Integer[]> tempPositions = new ArrayList<Integer[]>();
-  //ArrayList<PShape> tempLines = new ArrayList<PShape>();
-  
-  //tempPositions.add(allLinePositions_left.get(0));
-  //tempLines.add(allLines_left.get(0));
-  
-  //allLinePositions_left = tempPositions;
-  //allLines_left = tempLines;
-  
-  //allLinePositions_left_grey = tempPositions;
-  //allLines_left_grey = tempLines;
-  
-  
 }
 
 void create_pantagraph() {
@@ -734,10 +750,10 @@ void create_pantagraph() {
   
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
   endEffector.setFill(color(255, 255, 0));
-  endEffector_1 = createShape(ELLIPSE, deviceOrigin.x - 283 * 1.5 - left_margin_image_1 * 1.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
-  endEffector_2 = createShape(ELLIPSE, deviceOrigin.x - 283 * 0.5 - left_margin_image_1 * 0.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
-  endEffector_3 = createShape(ELLIPSE, deviceOrigin.x + 283 * 0.5 + left_margin_image_1 * 0.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
-  endEffector_4 = createShape(ELLIPSE, deviceOrigin.x + 283 * 1.5 + left_margin_image_1 * 1.5, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
+  endEffector_1 = createShape(ELLIPSE, deviceOrigin.x - 283 * 1.5 - left_margin_image_1 * 1.5, deviceOrigin.y + 200, 2*rEEAni, 2*rEEAni);
+  endEffector_2 = createShape(ELLIPSE, deviceOrigin.x - 283 * 0.5 - left_margin_image_1 * 0.5, deviceOrigin.y + 200, 2*rEEAni, 2*rEEAni);
+  endEffector_3 = createShape(ELLIPSE, deviceOrigin.x + 283 * 0.5 + left_margin_image_1 * 0.5, deviceOrigin.y + 200, 2*rEEAni, 2*rEEAni);
+  endEffector_4 = createShape(ELLIPSE, deviceOrigin.x + 283 * 1.5 + left_margin_image_1 * 1.5, deviceOrigin.y + 200, 2*rEEAni, 2*rEEAni);
   strokeWeight(1);
 }
 
@@ -761,7 +777,7 @@ PVector calculate_line_force(float[] offsets, PVector pen_wall, int direction) {
   return force;
 }
 
-void updateImages(){
+void updateImages() {
   image_1 = loadImage(oak_trees[cur_image]);
   image_2 = loadImage(cedar_trees[cur_image]);
   image_3 = loadImage(chestnut_trees[cur_image]);
@@ -777,7 +793,7 @@ void updateImages(){
 }
 
 void update_animation(float th1, float th2, float xE, float yE) {
-  background(125);
+  background(10);
   xE = pixelsPerMeter * xE;
   yE = pixelsPerMeter * yE;
   
@@ -807,16 +823,31 @@ void update_animation(float th1, float th2, float xE, float yE) {
   left_margin_image_4 = image_1.width * 3 + left_margin_image_1 * 4;
   image(image_4, left_margin_image_4, top_margin_images);
 
-  textSize(48);
-  text("Haptic Herbology", screen_width / 2 - 150, 40);
+  // Title
+  textAlign(LEFT, TOP);
+  textSize(20);
+  text("Haptic Herbology", 5, 5);
+
+  // Instructions
+  textAlign(CENTER, CENTER);
   textSize(30);
-  int top_margin_text = top_margin_images + image_1.height + 30;
-  text("Oak", left_margin_image_1 + 100, top_margin_text);
-  text("Cedar", left_margin_image_2 + 100, top_margin_text);
-  text("Chestnut", left_margin_image_3 + 100, top_margin_text);
-  text("Aspen", left_margin_image_4 + 100, top_margin_text);
+  text("Which image do you think is being represented right now?", width / 2, height / 10);
+  text("Press the number on the keyboard that corresponds to the image.", width / 2, height / 10 + 35);
+
+  // 'Random' fact
+
+
+  // Image titles
+  textAlign(LEFT, TOP);
+  textSize(30);
+  int top_margin_text = top_margin_images - 50;
+  text("Oak (1)", left_margin_image_1 + 100, top_margin_text);
+  text("Cedar (2)", left_margin_image_2 + 90, top_margin_text);
+  text("Chestnut (3)", left_margin_image_3 + 60, top_margin_text);
+  text("Aspen (4)", left_margin_image_4 + 80, top_margin_text);
   
 
+  // Debugging lines
   if(show_lines){
     image(render_image, render_image_margin_x, render_image_margin_y);
 
@@ -846,12 +877,40 @@ void update_animation(float th1, float th2, float xE, float yE) {
   }
   
   translate(xE, yE);
+
+  // For debugging
   if(show_lines) 
-    shape(endEffector);
-  shape(endEffector_1);
-  shape(endEffector_2);
-  shape(endEffector_3);
-  shape(endEffector_4);
+    shape(endEffector); // Actual end-effector location
+
+  // End effector on each images
+  shape(endEffector_1); // EE on Oak
+  shape(endEffector_2); // EE on Cedar
+  shape(endEffector_3); // EE on Chestnut
+  shape(endEffector_4); // EE on Aspen
+}
+
+void update_intro() {
+  println("Update_intro ", intro_tree_timer);
+  background(0);
+
+  intro_tree_timer += (intro_tree_direction? 0.1 : -0.1);
+  
+  if(intro_tree_timer >= 100)
+    intro_tree_direction = false;
+  
+  if(intro_tree_timer <= 0)
+    intro_tree_direction = true;
+
+  textAlign(CENTER, CENTER);
+  text("Welcome to this Haptic Herbology informal pre-testing!", width/2, height/5);
+  textSize(26);
+  text("Press `Enter` to begin.", width/2, height/3);
+
+  drawTree();
+}
+
+void update_conclusion() {
+
 }
 
 PVector device_to_graphics(PVector deviceFrame) {
@@ -862,18 +921,46 @@ PVector graphics_to_device(PVector graphicsFrame) {
   return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
 }
 
+void participantSelection(int selected_image) {
+  println("Participant has selected image ", selected_image);
+
+
+
+}
+
 // Change state when any key pressed
 void keyPressed() {
   println("keyPressed", keyCode);
 
-  // Toggle rendering techniques
-  if (keyCode == '1'){
-    force_render_technique = 1;
-  } else if (keyCode == '2'){
-    force_render_technique = 2;
-  } else if (keyCode == '3'){
-    force_render_technique = 3;
+  if (keyCode == 10) { // Enter key
+    is_experiment_active = !is_experiment_active;
   }
+  // Nothing else should work until the experiment is started.
+  if (!is_experiment_active)
+    return;
+
+  // Participant pick
+  else if (keyCode == '1') {
+    participantSelection(1);
+  } else if (keyCode == '2') {
+    participantSelection(2);
+  } else if (keyCode == '3') {
+    participantSelection(3);
+  } else if (keyCode == '4') {
+    participantSelection(4);
+  }
+
+  // Toggle rendering techniques
+  else if (keyCode == 38) { // Up
+    if(force_render_technique == 3) 
+      force_render_technique = 0;
+    force_render_technique++;
+  } else if (keyCode == 40) { // Down
+    if(force_render_technique == 1) 
+      force_render_technique = 4;
+    force_render_technique--;
+  }
+
 
   // Toggle image color
   else if (keyCode == 32) { // Space bar
@@ -946,4 +1033,43 @@ void keyPressed() {
 }
 /* end helper functions section ****************************************************************************************/
 
- 
+
+void drawTree() {
+  stroke(255);
+  // Let's pick an angle 0 to 90 degrees based on the mouse position
+  float a = (intro_tree_timer / (float) 100) * 45f;
+  // Convert it to radians
+  theta = radians(a);
+  // Start the tree from the bottom of the screen
+  translate(width/2,height);
+  // Draw a line 120 pixels
+  line(0,0,0,-120);
+  // Move to the end of that line
+  translate(0,-120);
+  // Start the recursive branching!
+  branch(120);
+}
+
+void branch(float h) {
+  // Each branch will be 2/3rds the size of the previous one
+  h *= 0.66;
+  
+  // All recursive functions must have an exit condition!!!!
+  // Here, ours is when the length of the branch is 2 pixels or less
+  if (h > 2) {
+    pushMatrix();    // Save the current state of transformation (i.e. where are we now)
+    rotate(theta);   // Rotate by theta
+    line(0, 0, 0, -h);  // Draw the branch
+    translate(0, -h); // Move to the end of the branch
+    branch(h);       // Ok, now call myself to draw two new branches!!
+    popMatrix();     // Whenever we get back here, we "pop" in order to restore the previous matrix state
+    
+    // Repeat the same thing, only branch off to the "left" this time!
+    pushMatrix();
+    rotate(-theta);
+    line(0, 0, 0, -h);
+    translate(0, -h);
+    branch(h);
+    popMatrix();
+  }
+}
