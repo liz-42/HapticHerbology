@@ -874,6 +874,13 @@ void update_animation(float th1, float th2, float xE, float yE) {
   // 'Random' fact
   // TODO: Display fact
 
+  // Trials remaining
+  // if(combinations.size() > 0){
+  textSize(25);
+  textAlign(RIGHT, TOP);
+  text("Trials remaining " + combinations.size(), width, 0);
+  // }
+
   // Image titles
   textAlign(LEFT, TOP);
   textSize(30);
