@@ -613,7 +613,7 @@ void init_combinations() {
       }
     }
   }
-  println(combinations);
+  // println(combinations);
 }
 
 void start_trial() {
