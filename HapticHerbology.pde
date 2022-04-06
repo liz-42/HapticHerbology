@@ -654,6 +654,8 @@ void start_trial() {
 
   // Calculates image lines and placement
   process_image(all_images[0]);
+  time_with_forces = 0;
+  changed_state = true;
 }
 
 void process_image(String image) {
