@@ -201,7 +201,7 @@ void setup() {
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
   
-  haplyBoard          = new Board(this, "COM7", 0);
+  haplyBoard          = new Board(this, "COM4", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
@@ -653,7 +653,7 @@ void start_trial() {
   cur_image = tree_image_index;  
 
   // Calculates image lines and placement
-  process_image(all_images[0]);
+  process_image(all_images[tree_image_index]);
   time_with_forces = 0;
   changed_state = true;
 }
@@ -1152,4 +1152,3 @@ void branch(float h) {
     popMatrix();
   }
 }
-
