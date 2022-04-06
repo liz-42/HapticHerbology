@@ -142,10 +142,15 @@ String[] cedar_trees = {cedar_1, cedar_2, cedar_3, cedar_4};
 String[] oak_trees = {oak_1, oak_2, oak_3, oak_4};
 
 // Arrays for different facts
-String[] aspect_facts = {"aspect_facts 1", "aspect_facts 2"};
-String[] chestnut_facts = {"chestnut_facts 1", "chestnut_facts 2"};
-String[] cedar_facts = {"cedar_facts 1", "cedar_facts 2"};
-String[] oak_facts = {"oak_facts 1", "oak_facts 2"};
+String[] aspen_facts = {"aspect_facts 1", "aspect_facts 2", "aspen3", "aspen4"};
+String[] chestnut_facts = {"chestnut_facts 1", "chestnut_facts 2", "chestnut3", "chestnut4"};
+String[] cedar_facts = {"cedar_facts 1", "cedar_facts 2", "cedar3", "cedar4"};
+String[] oak_facts = {"oak_facts 1", "oak_facts 2", "oak3", "oak4"};
+String[] general_facts = {"general_facts1", "general_facts2", "general3", "general4"};
+
+// default random fact
+String random_fact = general_facts[0];
+String trial_result; 
 
 IntList combinations = new IntList();
 
@@ -170,6 +175,8 @@ String state = "regular";
 boolean show_lines = false;
 
 boolean is_experiment_active = false;
+boolean showing_tree_fact = false;
+boolean experiment = false; // if true, don't show plant facts
 boolean game_over = false;
 float theta; // For tree
 float intro_tree_timer = 0;
@@ -871,8 +878,6 @@ void update_animation(float th1, float th2, float xE, float yE) {
   text("Which image do you think is being represented right now?", width / 2, height / 10);
   text("Press the number on the keyboard that corresponds to the image.", width / 2, height / 10 + 35);
 
-  // 'Random' fact
-  // TODO: Display fact
 
   // Trials remaining
   // if(combinations.size() > 0){
@@ -931,6 +936,20 @@ void update_animation(float th1, float th2, float xE, float yE) {
   shape(endEffector_2); // EE on Cedar
   shape(endEffector_3); // EE on Chestnut
   shape(endEffector_4); // EE on Aspen
+  
+  if (showing_tree_fact) {
+    fill(100);
+    float top_x = width/2 - width/4;
+    float top_y = height/2.5 - height/4.5;
+    rect(top_x, top_y, width/2, height/2.5, 28);
+    // display trial result
+    fill(255);
+    textSize(20);
+    text(trial_result, top_x + top_x/4 + 40, top_y + 10, width/2, height/2);
+    // display random fact
+    text(random_fact, top_x + top_x/8 + 40, top_y + 80, width/2, height/2);
+    
+  }
 }
 
 void update_intro() {
@@ -969,6 +988,62 @@ PVector graphics_to_device(PVector graphicsFrame) {
   return graphicsFrame.set(-graphicsFrame.x, graphicsFrame.y);
 }
 
+void tree_fact_control() {
+  if(!experiment) {
+    showing_tree_fact = true;
+      // Update random fact
+      String updated_fact = update_tree_fact();
+      while (updated_fact == random_fact) {
+        updated_fact = update_tree_fact();
+      }
+      random_fact = updated_fact;
+  }
+  else {
+    start_trial();
+  }
+}
+
+String update_tree_fact() {
+  String updated_fact = random_fact;
+  if (tree_state == 1) {
+        int which_array = int(random(0,2));
+        if (which_array == 0) {
+          updated_fact = general_facts[int(random(0,4))];
+        }
+        else {
+          updated_fact = oak_facts[int(random(0,4))];
+        }
+      }
+   else if (tree_state == 2) {
+      int which_array = int(random(0,2));
+      if (which_array == 0) {
+        updated_fact = general_facts[int(random(0,4))];
+      }
+      else {
+        updated_fact = cedar_facts[int(random(0,4))];
+      }
+    }
+   else if (tree_state == 3) {
+      int which_array = int(random(0,2));
+      if (which_array == 0) {
+        updated_fact = general_facts[int(random(0,4))];
+      }
+      else {
+        updated_fact = chestnut_facts[int(random(0,4))];
+      }
+    }
+   else {
+      int which_array = int(random(0,2));
+      if (which_array == 0) {
+        updated_fact = general_facts[int(random(0,4))];
+      }
+      else {
+        updated_fact = aspen_facts[int(random(0,4))];
+      }
+   }
+   return updated_fact;
+}
+
 void participantSelection(int selected_image) {
   // Nothing should work until the experiment is started.
   if (!is_experiment_active)
@@ -980,7 +1055,7 @@ void participantSelection(int selected_image) {
   println("####################################");
 
   // TODO: Update stats
-  // TODO: Update random fact
+  trial_result = "You selected " + str(selected_image) + ", and the correct answer was " + str(tree_state);
 
   // Done trials?
   if(combinations.size() <= 0) {
@@ -989,7 +1064,8 @@ void participantSelection(int selected_image) {
   }
   // Not done trials
   else {
-    start_trial();
+    //start_trial();
+    tree_fact_control();
   }
 }
 
@@ -1001,6 +1077,12 @@ void keyPressed() {
     if(!is_experiment_active) {
       start_trial();
       is_experiment_active = true;
+    }
+    else if (showing_tree_fact) {
+      start_trial();
+      showing_tree_fact = false;
+      // reset fill
+      fill(255);
     }
     return;
   }
