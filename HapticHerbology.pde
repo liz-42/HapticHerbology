@@ -156,7 +156,7 @@ int default_width = 0;
 int default_height = 0; 
 
 // State to control which set of trees should be rendered
-String tree_state = "oak";
+int tree_state = 1; // oak
 
 // Rendering forces technique
 int force_render_technique = 1;
@@ -291,9 +291,9 @@ class SimulationThread implements Runnable {
       /* haptic wall force calculation */
       fWall.set(0, 0);
       
-      // change force offsets for main vertical lines depending on tree type
-      //println(posEE.x, posEE.y);
-      if (tree_state == "oak") {
+      // Change force offsets for main vertical lines depending on tree type
+      // println(posEE.x, posEE.y);
+      if (tree_state == 1) { // Oak
         float force_offset = 0.005 + abs(posEE.x) * 1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
@@ -311,7 +311,7 @@ class SimulationThread implements Runnable {
 
         penWall.set(1/(height_offset + force_offset), 0);
       }
-      else if (tree_state == "cedar") {
+      else if (tree_state == 2) { // Cedar
         float force_offset = 0.005 + abs(posEE.x) * 1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.01;
@@ -329,7 +329,7 @@ class SimulationThread implements Runnable {
 
         penWall.set(1/((height_offset + force_offset)*1.25), 0);
       }
-      else if (tree_state == "chestnut") {
+      else if (tree_state == 3) { // Chestnut
         float force_offset = 0.005 + abs(posEE.x) * 1.5; // To account for weakness when the end effector is perpendicular to the motors
         if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
           force_offset = force_offset + 0.03;
@@ -395,11 +395,11 @@ class SimulationThread implements Runnable {
           }
             
           // Change force offset for horizontal lines depending on tree type
-          if (tree_state == "oak") {
+          if (tree_state == 1) { // Oak
             penWall.set(0, 10);
-          } else if (tree_state == "cedar") {
+          } else if (tree_state == 2) { // Cedar
             penWall.set(0, 5);
-          } else if (tree_state == "chestnut") {
+          } else if (tree_state == 3) { // Chestnut
             penWall.set(5, 0);
             if ((( posEE.x < 0.02) && (posEE.x > -0.02))){
               penWall.set(1, 0);
@@ -436,7 +436,7 @@ class SimulationThread implements Runnable {
         
         case 2: // 
           // change force offsets for grey lines depending on tree type
-          if (tree_state == "oak") {
+          if (tree_state == 1) { // Oak
             float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
             if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
               force_offset_grey = force_offset_grey + 0.01;
@@ -456,7 +456,7 @@ class SimulationThread implements Runnable {
 
             penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*4));
           }
-          else if (tree_state == "cedar") {
+          else if (tree_state == 2) { // Cedar
             float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
             if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
               force_offset_grey = force_offset_grey + 0.01;
@@ -476,7 +476,7 @@ class SimulationThread implements Runnable {
 
             penWallGrey.set(0, 1/((height_offset_grey + force_offset_grey)*3));
           }
-          else if (tree_state == "chestnut") {
+          else if (tree_state == 3) { // Chestnut
             float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
             if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
               force_offset_grey = force_offset_grey + 0.01;
@@ -496,7 +496,7 @@ class SimulationThread implements Runnable {
 
             penWallGrey.set(1/((height_offset_grey + force_offset_grey)*3), 0);
           }
-          else {
+          else { // Aspen
             float force_offset_grey = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
             if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
               force_offset_grey = force_offset_grey + 0.01;
@@ -607,15 +607,16 @@ void init_combinations() {
   int count_images_per_tree_type = 4;
 
   for (int i = 1; i <= count_render_techniques; ++i) {
-    for (int j = 1; j < count_types_trees; ++j) {
-      for (int k = 1; k < count_images_per_tree_type; ++k) {
+    for (int j = 1; j <= count_types_trees; ++j) {
+      for (int k = 0; k < count_images_per_tree_type; ++k) {
         combinations.append(i * 1000 + j * 100 + k);
       }
     }
   }
+  println(combinations);
 }
 
-void start_experiment() {
+void start_trial() {
   combinations.shuffle();
 
   int first_combination = combinations.get(0);
@@ -633,17 +634,17 @@ void start_experiment() {
 
   force_render_technique = render_type;
 
-  if (tree_type == 1) {
-    tree_state = "oak";
+  if (tree_type == 1) { // Oak
+    tree_state = 1;
     all_images = oak_trees;
-  } else if (tree_type == 2) { 
-    tree_state = "chestnut";
-    all_images = chestnut_trees;
-  } else if (tree_type == 3) {
-    tree_state = "cedar";
+  } else if (tree_type == 2) { // Cedar
+    tree_state = 2;
     all_images = cedar_trees;
-  } else if (tree_type == 4) { 
-    tree_state = "aspen";
+  } else if (tree_type == 3) { // Chestnut
+    tree_state = 3;
+    all_images = chestnut_trees;
+  } else if (tree_type == 4) { // Aspen
+    tree_state = 4;
     all_images = aspen_trees;
   } else {
     println("There's an error in the initial data, ", tree_type, " is not a type of tree");
@@ -695,12 +696,12 @@ void process_image(String image) {
   int threshold_grey = 3; // For the smaller lines
 
   // Lower the threshold for aspen trees
-  if (tree_state == "aspen") {
+  if (tree_state == 4) { // Aspen
     threshold = 2;
     threshold_grey = 1;
   }
   // Lower the threshold for chestnut trees
-  if (tree_state == "chestnut") {
+  if (tree_state == 3) { // Chestnut
     threshold = 5;
     threshold_grey = 2;
   }
@@ -753,8 +754,8 @@ void process_image(String image) {
   }
   
   // Create horizontal lines for right image depending on tree type - vertical otherwise
-  if (tree_state == "oak" || tree_state == "cedar") {
-    for (int j = 0; j < render_image.height; j=j+20) {
+  if (tree_state == 1 || tree_state == 2) { // Oak or Cedar
+    for (int j = 0; j < render_image.height; j = j + 20) {
       Integer[] curLinePos = {render_image_margin_x - force_centering, render_image_margin_y + j, render_image_margin_x + render_image.width - force_centering, render_image_margin_y + j};
       PShape temp = createShape(LINE, render_image_margin_x, render_image_margin_y + j, render_image_margin_x + render_image.width, render_image_margin_y + j);
       //println(curLinePos);
@@ -869,7 +870,7 @@ void update_animation(float th1, float th2, float xE, float yE) {
   text("Press the number on the keyboard that corresponds to the image.", width / 2, height / 10 + 35);
 
   // 'Random' fact
-
+  // TODO: Display fact
 
   // Image titles
   textAlign(LEFT, TOP);
@@ -943,7 +944,12 @@ void update_intro() {
 }
 
 void update_conclusion() {
+  background(0);
 
+  textAlign(CENTER, CENTER);
+  text("Thank you for participating in this Haptic Herbology informal pre-testing!", width/2, height/5);
+  textSize(26);
+  text("Press `r` to start again.", width/2, height/3);
 }
 
 PVector device_to_graphics(PVector deviceFrame) {
@@ -955,10 +961,27 @@ PVector graphics_to_device(PVector graphicsFrame) {
 }
 
 void participantSelection(int selected_image) {
+  // Nothing should work until the experiment is started.
+  if (!is_experiment_active)
+    return;
+
+  println("####################################");
   println("Participant has selected image ", selected_image);
+  println("The correct answer was ", tree_state);
+  println("####################################");
 
+  // TODO: Update stats
+  // TODO: Update random fact
 
-
+  // Done trials?
+  if(combinations.size() <= 0) {
+    is_experiment_active = false;
+    game_over = true;
+  }
+  // Not done trials
+  else {
+    start_trial();
+  }
 }
 
 // Change state when any key pressed
@@ -966,12 +989,12 @@ void keyPressed() {
   println("keyPressed", keyCode);
 
   if (keyCode == 10) { // Enter key
-    start_experiment();
-    is_experiment_active = !is_experiment_active;
-  }
-  // Nothing else should work until the experiment is started.
-  if (!is_experiment_active)
+    if(!is_experiment_active) {
+      start_trial();
+      is_experiment_active = true;
+    }
     return;
+  }
 
   // Participant pick
   else if (keyCode == '1') {
@@ -984,20 +1007,21 @@ void keyPressed() {
     participantSelection(4);
   }
 
-  // Toggle rendering techniques
-  else if (keyCode == 38) { // Up
-    if(force_render_technique == 3) 
-      force_render_technique = 0;
-    force_render_technique++;
-  } else if (keyCode == 40) { // Down
-    if(force_render_technique == 1) 
-      force_render_technique = 4;
-    force_render_technique--;
+  else if (keyCode == 82){ // r
+    println("Restarting setup..");
+    game_over = false;
+    is_experiment_active = false;
+    
+    init_combinations();
+    return;
   }
-
 
   // Toggle image color
   else if (keyCode == 32) { // Space bar
+    // Nothing should work until the experiment is started.
+    if (!is_experiment_active)
+      return;
+
     if(state == "regular") state = "baw";
     else if(state == "baw") state = "grey";
     else if(state == "grey") state = "regular";
@@ -1011,55 +1035,66 @@ void keyPressed() {
     show_lines = !show_lines;
   }
 
+  // Toggle rendering techniques
+  // else if (keyCode == 38) { // Up
+  //   if(force_render_technique == 3) 
+  //     force_render_technique = 0;
+  //   force_render_technique++;
+  // } else if (keyCode == 40) { // Down
+  //   if(force_render_technique == 1) 
+  //     force_render_technique = 4;
+  //   force_render_technique--;
+  // }
+
   // Toggle which type of tree is rendered
-  else if (keyCode == 79) { // o
-    tree_state = "oak";
-    all_images = oak_trees;
-    process_image(all_images[cur_image]);
-    time_with_forces = 0;
-    changed_state = true;
-  }
-  else if (keyCode == 67) { // c
-    tree_state = "cedar";
-    all_images = cedar_trees;
-    process_image(all_images[cur_image]);
-    time_with_forces = 0;
-    changed_state = true;
-  }
-  else if (keyCode == 72) { // h
-    tree_state = "chestnut";
-    all_images = chestnut_trees;
-    process_image(all_images[cur_image]);
-    time_with_forces = 0;
-    changed_state = true;
-  }
-  else if (keyCode == 65) { // a
-    tree_state = "aspen";
-    all_images = aspen_trees;
-    process_image(all_images[cur_image]);
-    time_with_forces = 0;
-    changed_state = true;
-  }
+  // else if (keyCode == 79) { // o
+  //   tree_state = 1; // Oak
+  //   all_images = oak_trees;
+  //   process_image(all_images[cur_image]);
+  //   time_with_forces = 0;
+  //   changed_state = true;
+  // }
+  // else if (keyCode == 67) { // c
+  //   tree_state = 2; // Cedar
+  //   all_images = cedar_trees;
+  //   process_image(all_images[cur_image]);
+  //   time_with_forces = 0;
+  //   changed_state = true;
+  // }
+  // else if (keyCode == 72) { // h
+  //   tree_state = 3; // Chestnut
+  //   all_images = chestnut_trees;
+  //   process_image(all_images[cur_image]);
+  //   time_with_forces = 0;
+  //   changed_state = true;
+  // }
+  // else if (keyCode == 65) { // a
+  //   tree_state = 4; // Aspen
+  //   all_images = aspen_trees;
+  //   process_image(all_images[cur_image]);
+  //   time_with_forces = 0;
+  //   changed_state = true;
+  // }
 
   // Change images using Right and left arrow keys
-  else if (keyCode == 39) {
-    if(cur_image < (all_images.length - 1)) {
-      cur_image = cur_image + 1;
-    }
-    else {
-      cur_image = 0;
-    }
-    process_image(all_images[cur_image]);
-  }
-  else if (keyCode == 37) {
-    if(cur_image > 0) {
-      cur_image = cur_image - 1;
-    }
-    else {
-      cur_image = all_images.length - 1;
-    }
-    process_image(all_images[cur_image]);
-  }
+  // else if (keyCode == 39) {
+  //   if(cur_image < (all_images.length - 1)) {
+  //     cur_image = cur_image + 1;
+  //   }
+  //   else {
+  //     cur_image = 0;
+  //   }
+  //   process_image(all_images[cur_image]);
+  // }
+  // else if (keyCode == 37) {
+  //   if(cur_image > 0) {
+  //     cur_image = cur_image - 1;
+  //   }
+  //   else {
+  //     cur_image = all_images.length - 1;
+  //   }
+  //   process_image(all_images[cur_image]);
+  // }
 
   // println("force_render_technique: ", force_render_technique);
   // println("state: ", state);
@@ -1108,3 +1143,4 @@ void branch(float h) {
     popMatrix();
   }
 }
+
