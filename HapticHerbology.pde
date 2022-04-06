@@ -186,7 +186,7 @@ void setup() {
   /* Screen size definition */
   size(1232, 750);
   
-  printArray(PFont.list());
+  // printArray(PFont.list());
   font = createFont("Georgia", 32, true);
   textFont(font);
 
@@ -602,7 +602,7 @@ class SimulationThread implements Runnable {
 /* Helper functions section, place helper functions here ***************************************************************/
 void init_combinations() {
   combinations = new IntList();
-  int count_render_techniques = 3;
+  int count_render_techniques = 2;
   int count_types_trees = 4;
   int count_images_per_tree_type = 4;
 
@@ -616,7 +616,41 @@ void init_combinations() {
 }
 
 void start_experiment() {
-  
+  combinations.shuffle();
+
+  int first_combination = combinations.get(0);
+  combinations.remove(0);
+
+  int render_type = first_combination / 1000;
+  first_combination -= render_type * 1000;
+  int tree_type = first_combination / 100;
+  first_combination -= tree_type * 100;
+  int tree_image_index = first_combination;
+
+  println("render_type = ", render_type);
+  println("tree_type = ", tree_type);
+  println("tree_image_index = ", tree_image_index);
+
+  force_render_technique = render_type;
+
+  if (tree_type == 1) {
+    tree_state = "oak";
+    all_images = oak_trees;
+  } else if (tree_type == 2) { 
+    tree_state = "chestnut";
+    all_images = chestnut_trees;
+  } else if (tree_type == 3) {
+    tree_state = "cedar";
+    all_images = cedar_trees;
+  } else if (tree_type == 4) { 
+    tree_state = "aspen";
+    all_images = aspen_trees;
+  } else {
+    println("There's an error in the initial data, ", tree_type, " is not a type of tree");
+  }
+
+  cur_image = tree_image_index;  
+
   // Calculates image lines and placement
   process_image(all_images[0]);
 }
@@ -788,8 +822,8 @@ void updateImages() {
   image_3.resize(default_width, default_height);
   image_4.resize(default_width, default_height);
 
-  println("w: ", image_1.width);
-  println("h: ", image_1.height);
+  // println("w: ", image_1.width);
+  // println("h: ", image_1.height);
 }
 
 void update_animation(float th1, float th2, float xE, float yE) {
@@ -890,7 +924,6 @@ void update_animation(float th1, float th2, float xE, float yE) {
 }
 
 void update_intro() {
-  println("Update_intro ", intro_tree_timer);
   background(0);
 
   intro_tree_timer += (intro_tree_direction? 0.1 : -0.1);
@@ -933,6 +966,7 @@ void keyPressed() {
   println("keyPressed", keyCode);
 
   if (keyCode == 10) { // Enter key
+    start_experiment();
     is_experiment_active = !is_experiment_active;
   }
   // Nothing else should work until the experiment is started.
@@ -968,6 +1002,7 @@ void keyPressed() {
     else if(state == "baw") state = "grey";
     else if(state == "grey") state = "regular";
 
+    println("state: ", state);
     updateImages();
   }
 
@@ -1026,10 +1061,10 @@ void keyPressed() {
     process_image(all_images[cur_image]);
   }
 
-  println("force_render_technique: ", force_render_technique);
-  println("state: ", state);
-  println("tree_state: ", tree_state);
-  println("cur_image: ", cur_image);
+  // println("force_render_technique: ", force_render_technique);
+  // println("state: ", state);
+  // println("tree_state: ", tree_state);
+  // println("cur_image: ", cur_image);
 }
 /* end helper functions section ****************************************************************************************/
 
