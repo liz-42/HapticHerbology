@@ -94,7 +94,15 @@ ArrayList<PShape> allLines_left = new ArrayList<PShape>();
 ArrayList<PShape> allLines_left_grey = new ArrayList<PShape>();
 
 // Horizontal lines
-ArrayList<PShape> allHorLines = new ArrayList<PShape>();              
+ArrayList<PShape> allHorLines = new ArrayList<PShape>();    
+
+ArrayList<Integer[]> linesMiddleRT3_positions = new ArrayList<Integer[]>();
+ArrayList<PShape> linesMiddleRT3 = new ArrayList<PShape>();
+ArrayList<Integer[]> linesBorderRT3_positions = new ArrayList<Integer[]>();
+ArrayList<PShape> linesBorderRT3 = new ArrayList<PShape>();
+
+ArrayList<Integer[]> linesMiddleRT4_positions = new ArrayList<Integer[]>();
+ArrayList<PShape> linesMiddleRT4 = new ArrayList<PShape>();
 
 PImage render_image;
 int render_image_margin_x = 475;
@@ -196,7 +204,7 @@ boolean show_lines = false;
 
 boolean is_experiment_active = false;
 boolean showing_tree_fact = false;
-boolean experiment = false; // if true, don't show plant facts
+boolean experiment = true; // if true, don't show plant facts
 boolean game_over = false;
 float theta; // For tree
 float intro_tree_timer = 0;
@@ -235,7 +243,7 @@ void setup() {
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
   
-  haplyBoard          = new Board(this, "COM4", 0);
+  haplyBoard          = new Board(this, "COM7", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
@@ -635,15 +643,15 @@ class SimulationThread implements Runnable {
 
 /* Helper functions section, place helper functions here ***************************************************************/
 void init_combinations() {
-  int count_render_techniques = 2;
   trials = new ArrayList<Trial>();
+  int count_render_techniques = 4;
   int count_types_trees = 4;
   int count_images_per_tree_type = 4;
 
   for (int i = 1; i <= count_render_techniques; ++i) {
     for (int j = 1; j <= count_types_trees; ++j) {
       for (int k = 0; k < count_images_per_tree_type; ++k) {
-        trials.add(new Trial(i,j,k));
+        trials.add(new Trial(4,j,k));
       }
     }
   }
@@ -759,79 +767,131 @@ void process_image(String image) {
     threshold = 5;
     threshold_grey = 2;
   }
-
-  // Read image vertically
-  // Create lines accordingly
-  int black = 0;
   int startJ = 0;
-  
-  for (int i = 0; i < render_image.width; i++) {
-    for (int j = 0; j < render_image.height; j++) {
-      float pixel = red(render_image.pixels[i + j * render_image.width]);
 
-      // If pixel is black
-      if(pixel < 10) {
-        if(black == 0) {
-          startJ = j;
+  switch (force_render_technique) {
+    case 3:
+
+      break;
+
+    case 4:
+      linesMiddleRT4_positions = new ArrayList<Integer[]>();
+      linesMiddleRT4 = new ArrayList<PShape>();
+
+      int random_pixel_quantity = 0;
+      startJ = 0;
+      boolean is_pshape = true;
+      
+      for (int i = 0; i < render_image.width; i += int(random(1,4))) {
+        random_pixel_quantity = int(random(2, 25));
+        startJ = 0;
+        is_pshape = !is_pshape;
+
+        for (int j = 0; j < render_image.height; j++) {
+          float pixel = red(render_image.pixels[i + j * render_image.width]);
+
+          random_pixel_quantity--;
+
+          if(random_pixel_quantity == 0){
+            if(is_pshape){
+              Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+              PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+              //println(curLinePos);
+              line.setStroke(color(0,255,0));
+            
+              // add to list
+              linesMiddleRT4_positions.add(linePos);
+              linesMiddleRT4.add(line);
+            }
+
+            random_pixel_quantity = int(random(2, random(3, 50)));
+            startJ = j;
+            is_pshape = !is_pshape;
+
+            if(j + random_pixel_quantity >= render_image.height)
+              break;
+          }
         }
-        black++;
       }
+      break;
+    
+    default:
+      // Read image vertically
+      // Create lines accordingly
+      int black = 0;
+      startJ = 0;
+      
+      for (int i = 0; i < render_image.width; i++) {
+        for (int j = 0; j < render_image.height; j++) {
+          float pixel = red(render_image.pixels[i + j * render_image.width]);
 
-      // If pixel is not black
-      if (pixel >= 5 || j == render_image.height - 1) {
-        if ((black >= threshold_grey) && (black < threshold)) {
-          Integer[] curLinePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
-          PShape temp = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+          // If pixel is black
+          if(pixel < 10) {
+            if(black == 0) {
+              startJ = j;
+            }
+            black++;
+          }
+
+          // If pixel is not black
+          if (pixel >= 5 || j == render_image.height - 1) {
+            if ((black >= threshold_grey) && (black < threshold)) {
+              Integer[] curLinePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+              PShape temp = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+              //println(curLinePos);
+              temp.setStroke(color(0,150,150));
+            
+              // add to list
+              allLinePositions_left_grey.add(curLinePos);
+              allLines_left_grey.add(temp);
+            }
+            else if (black >= threshold) {
+              Integer[] curLinePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+              PShape temp = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+              temp.setStroke(color(0,0,150));
+            
+              // add to list
+              allLinePositions_left.add(curLinePos);
+              allLines_left.add(temp);
+
+              
+              allLinePositions.add(curLinePos);
+              allLines.add(temp);
+            }
+              black = 0;
+          }
+        }
+      }
+  
+      // Create horizontal lines for right image depending on tree type - vertical otherwise
+      if (tree_state == 1 || tree_state == 2) { // Oak or Cedar
+        for (int j = 0; j < render_image.height; j = j + 20) {
+          Integer[] curLinePos = {render_image_margin_x - force_centering, render_image_margin_y + j, render_image_margin_x + render_image.width - force_centering, render_image_margin_y + j};
+          PShape temp = createShape(LINE, render_image_margin_x, render_image_margin_y + j, render_image_margin_x + render_image.width, render_image_margin_y + j);
           //println(curLinePos);
-          temp.setStroke(color(0,150,150));
-        
-          // add to list
-          allLinePositions_left_grey.add(curLinePos);
-          allLines_left_grey.add(temp);
-        }
-        else if (black >= threshold) {
-          Integer[] curLinePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
-          PShape temp = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
           temp.setStroke(color(0,0,150));
-        
+            
           // add to list
-          allLinePositions_left.add(curLinePos);
-          allLines_left.add(temp);
-
-          
-          allLinePositions.add(curLinePos);
-          allLines.add(temp);
+          allHorLinePositions.add(curLinePos);
+          allHorLines.add(temp);
         }
-          black = 0;
       }
-    }
+      else {
+        for (int j = 0; j < render_image.width; j=j+20) {
+          Integer[] curLinePos = {render_image_margin_x + j - force_centering, render_image_margin_y, render_image_margin_x + j - force_centering, render_image_margin_y + render_image.height};
+          PShape temp = createShape(LINE, render_image_margin_x + j, render_image_margin_y, render_image_margin_x + j, render_image_margin_y + render_image.height);
+          //println(curLinePos);
+          temp.setStroke(color(0,0,150));
+            
+          // add to list
+          allHorLinePositions.add(curLinePos);
+          allHorLines.add(temp);
+        }
+      }
+      break;
   }
+
   
-  // Create horizontal lines for right image depending on tree type - vertical otherwise
-  if (tree_state == 1 || tree_state == 2) { // Oak or Cedar
-    for (int j = 0; j < render_image.height; j = j + 20) {
-      Integer[] curLinePos = {render_image_margin_x - force_centering, render_image_margin_y + j, render_image_margin_x + render_image.width - force_centering, render_image_margin_y + j};
-      PShape temp = createShape(LINE, render_image_margin_x, render_image_margin_y + j, render_image_margin_x + render_image.width, render_image_margin_y + j);
-      //println(curLinePos);
-      temp.setStroke(color(0,0,150));
-        
-      // add to list
-      allHorLinePositions.add(curLinePos);
-      allHorLines.add(temp);
-    }
-  }
-  else {
-    for (int j = 0; j < render_image.width; j=j+20) {
-      Integer[] curLinePos = {render_image_margin_x + j - force_centering, render_image_margin_y, render_image_margin_x + j - force_centering, render_image_margin_y + render_image.height};
-      PShape temp = createShape(LINE, render_image_margin_x + j, render_image_margin_y, render_image_margin_x + j, render_image_margin_y + render_image.height);
-      //println(curLinePos);
-      temp.setStroke(color(0,0,150));
-        
-      // add to list
-      allHorLinePositions.add(curLinePos);
-      allHorLines.add(temp);
-    }
-  }
 }
 
 void create_pantagraph() {
@@ -966,6 +1026,11 @@ void update_animation(float th1, float th2, float xE, float yE) {
         }
         break;
       case 3:
+        break;
+      case 4:
+        for (int i = 0; i < linesMiddleRT4.size(); ++i) {
+          shape(linesMiddleRT4.get(i));
+        }
         break;
     }
   }
