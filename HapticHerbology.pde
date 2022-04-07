@@ -211,7 +211,7 @@ float intro_tree_timer = 0;
 boolean intro_tree_direction = true;
 
 // Score
-int total_score = 0;
+// int total_score = 0;
 boolean stats_calculated = false;
 int[][] rt1 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 int[][] rt2 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
@@ -1352,7 +1352,7 @@ void update_animation(float th1, float th2, float xE, float yE) {
     text("Tree fact: " + random_fact, top_x + top_x/10 + 40, top_y + 80, width/2 - top_x/2.5, height/2);
     // display score
     textSize(18);
-    text("score: " + str(total_score), top_x*2.7, top_y*2.6, width/2, height/2);
+    // text("score: " + str(total_score), top_x*2.7, top_y*2.6, width/2, height/2);
     // show how to move on
     text("Press 'Enter' to move on", top_x + 20, top_y*2.6, width/2, height/2);
   }
@@ -1399,8 +1399,8 @@ void update_conclusion() {
 
   textAlign(CENTER, CENTER);
   text("Thank you for participating in this Haptic Herbology informal pre-testing!", width/2, height/5);
-  textSize(26);
-  text("Your final score is: " + total_score, width/2, height/4);
+  // textSize(26);
+  // text("Your final score is: " + total_score, width/2, height/4);
   textSize(26);
   text("Press `r` to start again.", width/2, height/3);
 
@@ -1549,9 +1549,9 @@ void participantSelection(int selected_image) {
       break;    
   }
 
-  if (selected_image == tree_state) {
-    total_score++;
-  }
+  // if (selected_image == tree_state) {
+  //   total_score++;
+  // }
   
   trial_result = "The correct answer is: " + correct_answer;
 
@@ -1600,7 +1600,7 @@ void keyPressed() {
     println("Restarting setup..");
     game_over = false;
     is_experiment_active = false;
-    total_score = 0;
+    // total_score = 0;
     
     init_combinations();
     return;
