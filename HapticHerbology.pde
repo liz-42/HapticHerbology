@@ -842,14 +842,14 @@ class SimulationThread implements Runnable {
 /* Helper functions section, place helper functions here ***************************************************************/
 void init_combinations() {
   trials = new ArrayList<Trial>();
-  int count_render_techniques = 3;
+  int count_render_techniques = 4;
   int count_types_trees = 4;
   int count_images_per_tree_type = 4;
 
   for (int i = 1; i <= count_render_techniques; ++i) {
     for (int j = 1; j <= count_types_trees; ++j) {
       for (int k = 0; k < count_images_per_tree_type; ++k) {
-        trials.add(new Trial(3, j, k));
+        trials.add(new Trial(i, j, k));
       }
     }
   }
@@ -874,7 +874,7 @@ void start_trial() {
   println("tree_type = ", tree_type);
   // println("tree_image_index = ", tree_image_index);
 
-  force_render_technique = 3; // changed to 3 for testing, go back to render_type when done
+  force_render_technique = render_type; // changed to 3 for testing, go back to render_type when done
 
   if (tree_type == 1) { // Oak
     tree_state = 1;
@@ -1283,9 +1283,6 @@ void update_animation(float th1, float th2, float xE, float yE) {
         }
         for(int i=0; i < allLines_left_grey.size(); i++) {
           shape(allLines_left_grey.get(i));
-        }
-        for(int i=0; i < allHorLines.size(); i++) {
-          shape(allHorLines.get(i));
         }
         break;
       case 3:
