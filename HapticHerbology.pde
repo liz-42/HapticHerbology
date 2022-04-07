@@ -216,6 +216,7 @@ boolean stats_calculated = false;
 int[][] rt1 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 int[][] rt2 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 int[][] rt3 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+int[][] rt4 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 
 PFont font;
 
@@ -243,7 +244,7 @@ void setup() {
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
   
-  haplyBoard          = new Board(this, "COM4", 0);
+  haplyBoard          = new Board(this, "COM7", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
@@ -719,7 +720,7 @@ class SimulationThread implements Runnable {
         
           break;
           
-          case 4:
+        case 4:
           // change force offsets for inner random lines based on end effector position
           if (tree_state == 1) { // Oak
             float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
@@ -819,7 +820,6 @@ class SimulationThread implements Runnable {
             PVector cur_line_force = calculate_line_force(line_endeffector_offsets_middle, penWallGrey, -1); // -1 applies outward line force
             if (cur_line_force.x != 0 || cur_line_force.y != 0) {
               fWall.add(cur_line_force);
-              println(cur_line_force);
               break;
             }
           }
@@ -849,7 +849,7 @@ void init_combinations() {
   for (int i = 1; i <= count_render_techniques; ++i) {
     for (int j = 1; j <= count_types_trees; ++j) {
       for (int k = 0; k < count_images_per_tree_type; ++k) {
-        trials.add(new Trial(i, j, k));
+        trials.add(new Trial(3, j, k));
       }
     }
   }
@@ -975,17 +975,7 @@ void process_image(String image) {
           if (pixel > 10 && j != render_image.height - 1) {
             // If it's a border pixel
             if (left_pixel < 10 || right_pixel < 10 || (j > 0 && above_pixel < 10) || ( j < render_image.height - 1 && below_pixel < 10)) {
-              // If we were tracking non-borders before
-              if (white_middle > 3) {
-                Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
-                PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
-                line.setStroke(color(255, 0, 255));
-              
-                // add to list
-                linesMiddleRT3_positions.add(linePos);
-                linesMiddleRT3.add(line);
-              }
-              white_middle = int(random(-8, -2));
+              white_middle = 0;
 
               // Start tracking borders
               if (white_border == 0) {
@@ -1012,14 +1002,17 @@ void process_image(String image) {
                 }
                 white_middle++;
 
-                if (white_middle > random(1, 4)) {
-                  Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
-                  PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
-                  line.setStroke(color(255, 0, 255));
-                
-                  // add to list
-                  linesMiddleRT3_positions.add(linePos);
-                  linesMiddleRT3.add(line);
+                if (white_middle > random(2, 5)) {  // Length of middle lines
+                  // if (random(0, 100) > 50) {     // If you want to just simply cut the quantity of lines by x factor
+                  if (i % int(random(2, 5)) == 0) { // Potential spacing betwen lines
+                    Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+                    PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+                    line.setStroke(color(255, 0, 255));
+                  
+                    // add to list
+                    linesMiddleRT3_positions.add(linePos);
+                    linesMiddleRT3.add(line);
+                  }
                   white_middle = int(random(-8, -2));
                   startJ = j;
                 }
@@ -1028,16 +1021,6 @@ void process_image(String image) {
           } 
           // If it isn't a white pixel
           else if (pixel < 10 || j == render_image.height - 1) {
-            if (white_middle > random(1, 4)) {
-              Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
-              PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
-              line.setStroke(color(255, 0, 255));
-            
-              // add to list
-              linesMiddleRT3_positions.add(linePos);
-              linesMiddleRT3.add(line);
-            }
-
             if (white_border > 0) {
               Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
               PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
@@ -1171,9 +1154,7 @@ void process_image(String image) {
         }
       }
       break;
-  }
-
-  
+  } 
 }
 
 void create_pantagraph() {
@@ -1404,6 +1385,8 @@ void calculate_stats() {
       rt2[curr.tree_type - 1][curr.tree_image_index] += curr.participant_guess == curr.tree_type ? 1 : -1;
     } else if (curr.render_technique == 3) {
       rt3[curr.tree_type - 1][curr.tree_image_index] += curr.participant_guess == curr.tree_type ? 1 : -1;
+    } else if (curr.render_technique == 4) {
+      rt4[curr.tree_type - 1][curr.tree_image_index] += curr.participant_guess == curr.tree_type ? 1 : -1;
     }
   }
 
@@ -1422,10 +1405,19 @@ void calculate_stats() {
     }
     println();
   }
+
   println("rt3");
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       print(rt3[i][j] + " ");
+    }
+    println();
+  }
+
+  println("rt4");
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      print(rt4[i][j] + " ");
     }
     println();
   }
@@ -1598,72 +1590,6 @@ void keyPressed() {
   else if(keyCode == 80){ // p
     show_lines = !show_lines;
   }
-
-  // Toggle rendering techniques
-  // else if (keyCode == 38) { // Up
-  //   if(force_render_technique == 3) 
-  //     force_render_technique = 0;
-  //   force_render_technique++;
-  // } else if (keyCode == 40) { // Down
-  //   if(force_render_technique == 1) 
-  //     force_render_technique = 4;
-  //   force_render_technique--;
-  // }
-
-  // Toggle which type of tree is rendered
-  // else if (keyCode == 79) { // o
-  //   tree_state = 1; // Oak
-  //   all_images = oak_trees;
-  //   process_image(all_images[cur_image]);
-  //   time_with_forces = 0;
-  //   changed_state = true;
-  // }
-  // else if (keyCode == 67) { // c
-  //   tree_state = 2; // Cedar
-  //   all_images = cedar_trees;
-  //   process_image(all_images[cur_image]);
-  //   time_with_forces = 0;
-  //   changed_state = true;
-  // }
-  // else if (keyCode == 72) { // h
-  //   tree_state = 3; // Chestnut
-  //   all_images = chestnut_trees;
-  //   process_image(all_images[cur_image]);
-  //   time_with_forces = 0;
-  //   changed_state = true;
-  // }
-  // else if (keyCode == 65) { // a
-  //   tree_state = 4; // Aspen
-  //   all_images = aspen_trees;
-  //   process_image(all_images[cur_image]);
-  //   time_with_forces = 0;
-  //   changed_state = true;
-  // }
-
-  // Change images using Right and left arrow keys
-  // else if (keyCode == 39) {
-  //   if(cur_image < (all_images.length - 1)) {
-  //     cur_image = cur_image + 1;
-  //   }
-  //   else {
-  //     cur_image = 0;
-  //   }
-  //   process_image(all_images[cur_image]);
-  // }
-  // else if (keyCode == 37) {
-  //   if(cur_image > 0) {
-  //     cur_image = cur_image - 1;
-  //   }
-  //   else {
-  //     cur_image = all_images.length - 1;
-  //   }
-  //   process_image(all_images[cur_image]);
-  // }
-
-  // println("force_render_technique: ", force_render_technique);
-  // println("state: ", state);
-  // println("tree_state: ", tree_state);
-  // println("cur_image: ", cur_image);
 }
 /* end helper functions section ****************************************************************************************/
 
