@@ -651,7 +651,7 @@ void init_combinations() {
   for (int i = 1; i <= count_render_techniques; ++i) {
     for (int j = 1; j <= count_types_trees; ++j) {
       for (int k = 0; k < count_images_per_tree_type; ++k) {
-        trials.add(new Trial(i,j,k));
+        trials.add(new Trial(i, j, k));
       }
     }
   }
@@ -724,11 +724,6 @@ void process_image(String image) {
   // Horizontal lines
   allHorLines = new ArrayList<PShape>();
 
-  linesMiddleRT3_positions = new ArrayList<Integer[]>();
-  linesMiddleRT3 = new ArrayList<PShape>();
-  linesBorderRT3_positions = new ArrayList<Integer[]>();
-  linesBorderRT3 = new ArrayList<PShape>();
-
   // Load images
   render_image = loadImage(image);
   updateImages();
@@ -760,6 +755,106 @@ void process_image(String image) {
 
   switch (force_render_technique) {
     case 3:
+      linesBorderRT3_positions = new ArrayList<Integer[]>();
+      linesBorderRT3 = new ArrayList<PShape>();
+      linesMiddleRT3_positions = new ArrayList<Integer[]>();
+      linesMiddleRT3 = new ArrayList<PShape>();
+
+      int white_middle = 0;
+      int white_border = 0;
+      startJ = 0;
+      boolean create_pshape = false;
+      
+      for (int i = 1; i < render_image.width - 1; i++) {
+        for (int j = 0; j < render_image.height; j++) {
+          float pixel = red(render_image.pixels[i + j * render_image.width]);
+          float left_pixel = red(render_image.pixels[i - 1 + j * render_image.width]);
+          float right_pixel = red(render_image.pixels[i + 1 + j * render_image.width]);
+          float above_pixel = (j > 0) ? red(render_image.pixels[i + (j - 1) * render_image.width]) : 255;
+          float below_pixel = (j < render_image.height - 1) ? red(render_image.pixels[i + (j + 1) * render_image.width]) : 255;
+
+          // If pixel is white
+          if (pixel > 10 && j != render_image.height - 1) {
+            // If it's a border pixel
+            if (left_pixel < 10 || right_pixel < 10 || (j > 0 && above_pixel < 10) || ( j < render_image.height - 1 && below_pixel < 10)) {
+              // If we were tracking non-borders before
+              if (white_middle > 3) {
+                Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+                PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+                line.setStroke(color(255, 0, 255));
+              
+                // add to list
+                linesMiddleRT3_positions.add(linePos);
+                linesMiddleRT3.add(line);
+              }
+              white_middle = int(random(-8, -2));
+
+              // Start tracking borders
+              if (white_border == 0) {
+                startJ = j;
+              }
+              white_border++;
+            } else {
+              // If it isn't a border, but we were tracking borders
+              if (white_border > 0) {
+                Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+                PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+                line.setStroke(color(255, 0, 0));
+              
+                // add to list
+                linesBorderRT3_positions.add(linePos);
+                linesBorderRT3.add(line);
+                white_middle = int(random(-8, -2));
+                white_border = 0;
+              } 
+              // If it isn't a border and we tracking non-borders
+              else if (j > random(0,5)) {
+                if (white_middle == 0) {
+                  startJ = j;
+                }
+                white_middle++;
+
+                if (white_middle > random(1, 4)) {
+                  Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+                  PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+                  line.setStroke(color(255, 0, 255));
+                
+                  // add to list
+                  linesMiddleRT3_positions.add(linePos);
+                  linesMiddleRT3.add(line);
+                  white_middle = int(random(-8, -2));
+                  startJ = j;
+                }
+              }
+            }
+          } 
+          // If it isn't a white pixel
+          else if (pixel < 10 || j == render_image.height - 1) {
+            if (white_middle > random(1, 4)) {
+              Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+              PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+              line.setStroke(color(255, 0, 255));
+            
+              // add to list
+              linesMiddleRT3_positions.add(linePos);
+              linesMiddleRT3.add(line);
+            }
+
+            if (white_border > 0) {
+              Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+              PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+              line.setStroke(color(255, 0, 0));
+            
+              // add to list
+              linesBorderRT3_positions.add(linePos);
+              linesBorderRT3.add(line);
+            }
+            
+            white_middle = 0;
+            white_border = 0;
+          }
+        }
+      }
 
       break;
 
@@ -1015,6 +1110,13 @@ void update_animation(float th1, float th2, float xE, float yE) {
         }
         break;
       case 3:
+        for (int i = 0; i < linesMiddleRT3.size(); ++i) {
+          shape(linesMiddleRT3.get(i));
+        }
+        for (int i = 0; i < linesBorderRT3.size(); ++i) {
+          shape(linesBorderRT3.get(i));
+        }
+
         break;
       case 4:
         for (int i = 0; i < linesMiddleRT4.size(); ++i) {
