@@ -100,7 +100,7 @@ PImage render_image;
 int render_image_margin_x = 475;
 int render_image_margin_y = 100;
 
-int top_margin_images = 300;
+int top_margin_images = 200;
 PImage image_1;
 int left_margin_image_1 = 20;
 PImage image_2;
@@ -816,10 +816,10 @@ void create_pantagraph() {
   
   endEffector = createShape(ELLIPSE, deviceOrigin.x, deviceOrigin.y, 2*rEEAni, 2*rEEAni);
   endEffector.setFill(color(255, 255, 0));
-  endEffector_1 = createShape(ELLIPSE, deviceOrigin.x - 283 * 1.5 - left_margin_image_1 * 1.5, deviceOrigin.y + 200, 2*rEEAni, 2*rEEAni);
-  endEffector_2 = createShape(ELLIPSE, deviceOrigin.x - 283 * 0.5 - left_margin_image_1 * 0.5, deviceOrigin.y + 200, 2*rEEAni, 2*rEEAni);
-  endEffector_3 = createShape(ELLIPSE, deviceOrigin.x + 283 * 0.5 + left_margin_image_1 * 0.5, deviceOrigin.y + 200, 2*rEEAni, 2*rEEAni);
-  endEffector_4 = createShape(ELLIPSE, deviceOrigin.x + 283 * 1.5 + left_margin_image_1 * 1.5, deviceOrigin.y + 200, 2*rEEAni, 2*rEEAni);
+  endEffector_1 = createShape(ELLIPSE, deviceOrigin.x - 283 * 1.5 - left_margin_image_1 * 1.5, deviceOrigin.y + 100, 2*rEEAni, 2*rEEAni);
+  endEffector_2 = createShape(ELLIPSE, deviceOrigin.x - 283 * 0.5 - left_margin_image_1 * 0.5, deviceOrigin.y + 100, 2*rEEAni, 2*rEEAni);
+  endEffector_3 = createShape(ELLIPSE, deviceOrigin.x + 283 * 0.5 + left_margin_image_1 * 0.5, deviceOrigin.y + 100, 2*rEEAni, 2*rEEAni);
+  endEffector_4 = createShape(ELLIPSE, deviceOrigin.x + 283 * 1.5 + left_margin_image_1 * 1.5, deviceOrigin.y + 100, 2*rEEAni, 2*rEEAni);
   strokeWeight(1);
 }
 
