@@ -244,7 +244,7 @@ void setup() {
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
   
-  haplyBoard          = new Board(this, "COM7", 0);
+  haplyBoard          = new Board(this, "COM4", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
@@ -760,7 +760,7 @@ class SimulationThread implements Runnable {
               height_offset_middle = height_offset_middle + 0.05;
             }
 
-            penWallGrey.set(1/((height_offset_middle + force_offset_middle))*1.05, 0);
+            penWallGrey.set(1/((height_offset_middle + force_offset_middle))*1.1, 0);
           }
           else if (tree_state == 3) { // Chestnut
             float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
@@ -800,7 +800,7 @@ class SimulationThread implements Runnable {
               height_offset_middle = height_offset_middle + 0.05;
             }
 
-            penWallGrey.set(0, 1/((height_offset_middle + force_offset_middle))*0.9);
+            penWallGrey.set(0, 1/((height_offset_middle + force_offset_middle))*1.0);
           }
           
           line_endeffector_offsets_middle = new float[4];
@@ -874,7 +874,7 @@ void start_trial() {
   println("tree_type = ", tree_type);
   // println("tree_image_index = ", tree_image_index);
 
-  force_render_technique = render_type; // changed to 3 for testing, go back to render_type when done
+  force_render_technique = 3; // changed to 3 for testing, go back to render_type when done
 
   if (tree_type == 1) { // Oak
     tree_state = 1;
