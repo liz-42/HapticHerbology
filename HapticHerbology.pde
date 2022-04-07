@@ -201,6 +201,9 @@ float theta; // For tree
 float intro_tree_timer = 0;
 boolean intro_tree_direction = true;
 
+// score
+int total_score = 0;
+
 PFont font;
 
 /* End elements definition *********************************************************************************************/ 
@@ -944,31 +947,37 @@ void update_animation(float th1, float th2, float xE, float yE) {
     }
   }
   
-  translate(xE, yE);
-
-  // For debugging
-  if(show_lines) 
-    shape(endEffector); // Actual end-effector location
-
-  // End effector on each images
-  shape(endEffector_1); // EE on Oak
-  shape(endEffector_2); // EE on Cedar
-  shape(endEffector_3); // EE on Chestnut
-  shape(endEffector_4); // EE on Aspen
-  
   if (showing_tree_fact) {
     fill(100);
     float top_x = width/2 - width/4;
-    float top_y = height/2.5 - height/4.5;
-    rect(top_x, top_y, width/2, height/2.5, 28);
+    float top_y = height/2 - height/4;
+    rect(top_x, top_y, width/2, height/2.2, 28);
     // display trial result
     fill(255);
     textSize(20);
-    text(trial_result, top_x + top_x/4 + 40, top_y + 10, width/2, height/2);
+    text(trial_result, top_x + top_x/2 + 20, top_y + 10, width/2, height/2);
     // display random fact
     text("Tree fact: " + random_fact, top_x + top_x/10 + 40, top_y + 80, width/2 - top_x/2.5, height/2);
-    
+    // display score
+    textSize(18);
+    text("score: " + str(total_score), top_x*2.7, top_y*2.6, width/2, height/2);
+    // show how to move on
+    text("Press 'Enter' to move on", top_x + 20, top_y*2.6, width/2, height/2);
   }
+  else {
+    translate(xE, yE);
+
+    // For debugging
+    if(show_lines) 
+      shape(endEffector); // Actual end-effector location
+
+    // End effector on each images
+    shape(endEffector_1); // EE on Oak
+    shape(endEffector_2); // EE on Cedar
+    shape(endEffector_3); // EE on Chestnut
+    shape(endEffector_4); // EE on Aspen
+  }
+  
 }
 
 void update_intro() {
@@ -995,6 +1004,8 @@ void update_conclusion() {
 
   textAlign(CENTER, CENTER);
   text("Thank you for participating in this Haptic Herbology informal pre-testing!", width/2, height/5);
+  textSize(26);
+  text("Your final score is: " + total_score, width/2, height/4);
   textSize(26);
   text("Press `r` to start again.", width/2, height/3);
 }
@@ -1072,9 +1083,29 @@ void participantSelection(int selected_image) {
   println("Participant has selected image ", selected_image);
   println("The correct answer was ", tree_state);
   println("####################################");
+  
+  String correct_answer = "";
+  switch (tree_state) {
+    case 1: // oak
+      correct_answer = "oak";
+      break;
+    case 2: //
+      correct_answer = "cedar";
+      break;
+    case 3:
+      correct_answer = "chestnut";
+      break;
+    case 4:
+      correct_answer = "aspen";
+      break;    
+  }
 
   // TODO: Update stats
-  trial_result = "You selected " + str(selected_image) + ", and the correct answer was " + str(tree_state);
+  if (selected_image == tree_state) {
+    total_score++;
+  }
+  
+  trial_result = "The correct answer is: " + correct_answer;
 
   // Done trials?
   if(combinations.size() <= 0) {
@@ -1121,6 +1152,7 @@ void keyPressed() {
     println("Restarting setup..");
     game_over = false;
     is_experiment_active = false;
+    total_score = 0;
     
     init_combinations();
     return;
