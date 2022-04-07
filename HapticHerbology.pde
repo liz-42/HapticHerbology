@@ -254,7 +254,7 @@ void setup() {
   widgetOne.add_encoder(1, CCW, 241, 10752, 2);
   widgetOne.add_encoder(2, CW, -61, 10752, 1);
   widgetOne.device_set_parameters();
-    
+  
   /* Visual elements setup */
   background(125);
   deviceOrigin.add(width/2, 0);
@@ -1004,7 +1004,7 @@ void process_image(String image) {
 
                 if (white_middle > random(2, 5)) {  // Length of middle lines
                   // if (random(0, 100) > 50) {     // If you want to just simply cut the quantity of lines by x factor
-                  if (i % int(random(2, 5)) == 0) { // Potential spacing betwen lines
+                  if (i % int(random(4, 7)) == 0) { // Potential spacing betwen lines
                     Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
                     PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
                     line.setStroke(color(255, 0, 255));
