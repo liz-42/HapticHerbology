@@ -962,7 +962,7 @@ void process_image(String image) {
       int white_border = 0;
       startJ = 0;
       boolean create_pshape = false;
-      
+
       for (int i = 1; i < render_image.width - 1; i++) {
         for (int j = 0; j < render_image.height; j++) {
           float pixel = red(render_image.pixels[i + j * render_image.width]);
@@ -1047,37 +1047,74 @@ void process_image(String image) {
       startJ = 0;
       boolean is_pshape = true;
       
-      for (int i = 0; i < render_image.width; i += int(random(1,10))) {
-        random_pixel_quantity = int(random(2, 25));
-        startJ = 0;
-        is_pshape = !is_pshape;
 
-        for (int j = 0; j < render_image.height; j++) {
-          float pixel = red(render_image.pixels[i + j * render_image.width]);
+      boolean show_horizontal_lines = random(0, 1) > 0.5;
+      println("##", show_horizontal_lines);
+      
+      if(show_horizontal_lines) {
+        for (int i = 0; i < render_image.height; i += int(random(1,10))) {
+          random_pixel_quantity = int(random(2, 25));
+          startJ = 0;
+          is_pshape = !is_pshape;
 
-          random_pixel_quantity--;
+          for (int j = 0; j < render_image.width; j++) {
+            random_pixel_quantity--;
 
-          if(random_pixel_quantity == 0){
-            if(is_pshape){
-              Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
-              PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
-              //println(curLinePos);
-              line.setStroke(color(0,255,0));
-            
-              // add to list
-              linesMiddleRT4_positions.add(linePos);
-              linesMiddleRT4.add(line);
+            if(random_pixel_quantity == 0){
+              if(is_pshape){
+                Integer[] linePos = {render_image_margin_x + startJ - force_centering, render_image_margin_y + i, render_image_margin_x + j - force_centering, render_image_margin_y + i - 1};
+                PShape line = createShape(LINE, render_image_margin_x + startJ, render_image_margin_y + i, render_image_margin_x + j, render_image_margin_y + i - 1);
+                line.setStroke(color(0, 255, 0));
+              
+                // add to list
+                linesMiddleRT4_positions.add(linePos);
+                linesMiddleRT4.add(line);
+              }
+
+              random_pixel_quantity = int(random(2, random(3, 50)));
+              startJ = j;
+              is_pshape = !is_pshape;
+
+              if(j + random_pixel_quantity >= render_image.height)
+                break;
             }
+          }
+        }
+      } else {
+        for (int i = 0; i < render_image.width; i += int(random(1,10))) {
+          random_pixel_quantity = int(random(2, 25));
+          startJ = 0;
+          is_pshape = !is_pshape;
 
-            random_pixel_quantity = int(random(2, random(3, 50)));
-            startJ = j;
-            is_pshape = !is_pshape;
+          for (int j = 0; j < render_image.height; j++) {
+            float pixel = red(render_image.pixels[i + j * render_image.width]);
 
-            if(j + random_pixel_quantity >= render_image.height)
-              break;
+            random_pixel_quantity--;
+
+            if(random_pixel_quantity == 0){
+              if(is_pshape){
+                Integer[] linePos = {render_image_margin_x + i - force_centering, render_image_margin_y + startJ, render_image_margin_x + i - force_centering, render_image_margin_y + j - 1};
+                PShape line = createShape(LINE, render_image_margin_x + i, render_image_margin_y + startJ, render_image_margin_x + i, render_image_margin_y + j - 1);
+                //println(curLinePos);
+                line.setStroke(color(0,255,0));
+              
+                // add to list
+                linesMiddleRT4_positions.add(linePos);
+                linesMiddleRT4.add(line);
+              }
+
+              random_pixel_quantity = int(random(2, random(3, 50)));
+              startJ = j;
+              is_pshape = !is_pshape;
+
+              if(j + random_pixel_quantity >= render_image.height)
+                break;
+            }
           }
         }
       }
+
+
       break;
     
     default:
@@ -1532,7 +1569,7 @@ void participantSelection(int selected_image) {
 
 // Change state when any key pressed
 void keyPressed() {
-  println("keyPressed", keyCode);
+  println("\nkeyPressed", keyCode);
 
   if (keyCode == 10) { // Enter key
     if(!is_experiment_active) {
