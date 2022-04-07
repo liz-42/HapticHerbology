@@ -659,7 +659,6 @@ void init_combinations() {
 }
 
 void start_trial() {
-  // combinations.shuffle();
 
   Trial trial = getNextTrial();
   // This shouldn't happen, but catch it in case...
@@ -669,23 +668,13 @@ void start_trial() {
     return;
   }
 
-
   int render_type = trial.render_technique;
   int tree_type = trial.tree_type;
   int tree_image_index = trial.tree_image_index;
 
-  // int first_combination = combinations.get(0);
-  // combinations.remove(0);
-
-  // int render_type = first_combination / 1000;
-  // first_combination -= render_type * 1000;
-  // int tree_type = first_combination / 100;
-  // first_combination -= tree_type * 100;
-  // int tree_image_index = first_combination;
-
   println("render_type = ", render_type);
   println("tree_type = ", tree_type);
-  println("tree_image_index = ", tree_image_index);
+  // println("tree_image_index = ", tree_image_index);
 
   force_render_technique = render_type;
 
@@ -1213,10 +1202,10 @@ void participantSelection(int selected_image) {
 
   setParticipantGuess(force_render_technique, tree_state, cur_image, selected_image);
 
-  println("####################################");
-  println("Participant has selected image ", selected_image);
-  println("The correct answer was ", tree_state);
-  println("####################################");
+  // println("####################################");
+  // println("Participant has selected image ", selected_image);
+  // println("The correct answer was ", tree_state);
+  // println("####################################");
   
   String correct_answer = "";
   switch (tree_state) {
@@ -1234,7 +1223,6 @@ void participantSelection(int selected_image) {
       break;    
   }
 
-  // TODO: Update stats
   if (selected_image == tree_state) {
     total_score++;
   }
