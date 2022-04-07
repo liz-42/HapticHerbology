@@ -142,11 +142,30 @@ String[] cedar_trees = {cedar_1, cedar_2, cedar_3, cedar_4};
 String[] oak_trees = {oak_1, oak_2, oak_3, oak_4};
 
 // Arrays for different facts
-String[] aspen_facts = {"aspect_facts 1", "aspect_facts 2", "aspen3", "aspen4"};
-String[] chestnut_facts = {"chestnut_facts 1", "chestnut_facts 2", "chestnut3", "chestnut4"};
-String[] cedar_facts = {"cedar_facts 1", "cedar_facts 2", "cedar3", "cedar4"};
-String[] oak_facts = {"oak_facts 1", "oak_facts 2", "oak3", "oak4"};
-String[] general_facts = {"general_facts1", "general_facts2", "general3", "general4"};
+String[] aspen_facts = {"Young aspen trees have smooth, light coloured bark with horizontal lines of pores called lenticels. Older trees have bark that becomes darker and rougher, with more furrows.",
+                        "In addition to being waterproof, the dead outer cork cells of bark are also impervious to gasses. Lenticels (the horizontal lines) are pores that allow trees to “breathe” through this bark. While some trees may have very tiny lenticels, trees like aspen and birch have lenticels that are clearly visible with the naked eye.", 
+                        "Aspen trees reproduce clonally, which means they grow from root sprouts to produce large long-lived stands that are essentially one plant. While the individual trees that make up a stand typically only live up to 80 years, the stand as a whole can be thousands of years old.",
+                        "In addition to its leaves, the bark layer of quaking aspen trees also carries out photosynthesis, which means in winter aspen trees are still able to produce sugar for energy."};
+
+String[] chestnut_facts = {"Young trees have smooth bark with a pink/grey colour. As trees age, the bark darkens and develops scale-like plates.",
+                           "Horse chestnut trees are native to the Balkan peninsula in southeast Europe, but were introduced to Britain in the 1600s and from there spread to the rest of Europe and North America.", 
+                           "The large seeds of the tree (conkers) became part of a popular children’s game in the UK, and in 1965 two men started the “World Conker Championships” at the Ashton Conker Club, which are held yearly to this day.", 
+                           "Horse chestnut wood is very weak and therefore isn’t used commercially, but it has a smooth texture and creamy colour that makes it particularly desirable for carving."};
+
+String[] cedar_facts = {"Bark that grows in discontinuous, overlapping layers is known as scaly bark. Cedar is one example of this type of bark, and you may notice that cedar trees typically feel softer than the fissured type of bark typical to oak trees.", 
+                        "Western red cedar bark is typically reddish brown in colour, thin, fissured, and scaly, and tends to shed in irregular flakes. The inner part of the bark is fibrous. Cedar wood is typically used when moisture and decay resistance is more important than strength.", 
+                        "Cedar trees were called the “trees of life” by the Kwakwaka’wakw people, who used the bark and wood in material for clothing, shelter, transportation, and tools. The trees also have important spiritual and healing properties, and have been documented to have over three hundred distinct uses.", 
+                        "While the bark of red and yellow cedar appears very similar, the bark of yellow cedar tends to flake in small pieces rather than tear off in long strips like red cedar."};
+
+String[] oak_facts = {"Bark can look very different depending on tree species, but it can also vary within a single tree depending on location (trunk vs. branches) or age. For example, oak trees have persistent or fissured bark, which cracks and becomes deeply fissured over time. An old oak tree will have much deeper fissures than a young tree!", 
+                      "The thick, furrowed bark of oak trees make them particularly fire resistant and slow to burn. In general, mature trees that are fire resistant tend to have thicker bark than their less fire-resistant counterparts.", 
+                      "There are more than 60 different species of oak, each with their own unique characteristics. For example, chestnut oak tree bark tends to have deeper ridges, whereas bur oak has more shallow grooves.", 
+                      "Oak bark contains a high level of tannins, which have been shown to inhibit the release of inflammatory compounds, and oak bark has been used in medicine throughout history for topical and oral use to help reduce inflammation and sooth the skin."};
+
+String[] general_facts = {"Did you know that trees have four distinct layers of bark? From the outermost to innermost layer, they are the phellem, phellogen, phelloderm, and phloem. The part of the bark that you can see and feel is the phellem, but the phellogen and phelloderm are also part of the outer bark (periderm) layer as well.", 
+                          "The outermost layer of bark (phellem) is made up of dead cork cells: these cells are hollow, which is what helps insulate the inner layers of the tree from extreme temperatures and can also act as shock absorbers to help cushion the tree from impacts.", 
+                          "The walls of cork cells contain a compound called suberin, which helps to stop water getting into the bark or escaping from within the tree stem. This compound also gives bark a greyish colour.", 
+                          "The outer layer of bark contains many chemicals that help protect the tree from insects, fungi, and bacteria. These chemicals can include tannins, salicin, alkaloids, and plant glycosides, all of which are toxic to some degree and usually very bitter.  "};
 
 // default random fact
 String random_fact = general_facts[0];
@@ -947,7 +966,7 @@ void update_animation(float th1, float th2, float xE, float yE) {
     textSize(20);
     text(trial_result, top_x + top_x/4 + 40, top_y + 10, width/2, height/2);
     // display random fact
-    text(random_fact, top_x + top_x/8 + 40, top_y + 80, width/2, height/2);
+    text("Tree fact: " + random_fact, top_x + top_x/10 + 40, top_y + 80, width/2 - top_x/2.5, height/2);
     
   }
 }
