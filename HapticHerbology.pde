@@ -651,7 +651,7 @@ void init_combinations() {
   for (int i = 1; i <= count_render_techniques; ++i) {
     for (int j = 1; j <= count_types_trees; ++j) {
       for (int k = 0; k < count_images_per_tree_type; ++k) {
-        trials.add(new Trial(4,j,k));
+        trials.add(new Trial(i,j,k));
       }
     }
   }
