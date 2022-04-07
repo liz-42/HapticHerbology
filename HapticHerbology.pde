@@ -243,7 +243,7 @@ void setup() {
    *      mac:          haplyBoard = new Board(this, "/dev/cu.usbmodem1411", 0);
    */ 
   
-  haplyBoard          = new Board(this, "COM7", 0);
+  haplyBoard          = new Board(this, "COM4", 0);
   widgetOne           = new Device(widgetOneID, haplyBoard);
   pantograph          = new Pantograph();
   
@@ -410,30 +410,24 @@ class SimulationThread implements Runnable {
 
       switch (force_render_technique) {
         case 1: // 
-          float[][] line_endeffector_offsets = new float[allLinePositions.size()][4];
+          float[] line_endeffector_offsets = new float[4];
         
           for (int i = 0; i < allLinePositions.size(); i++) {
             // x1 offset
-            line_endeffector_offsets[i][0] = allLinePositions.get(i)[0] - (posEE.x * 4000.0 + render_image.width);
+            line_endeffector_offsets[0] = allLinePositions.get(i)[0] - (posEE.x * 4000.0 + render_image.width);
             // y1 offset
-            line_endeffector_offsets[i][1] = allLinePositions.get(i)[1] - (posEE.y * 4000.0); 
+            line_endeffector_offsets[1] = allLinePositions.get(i)[1] - (posEE.y * 4000.0); 
             // x2 offset
-            line_endeffector_offsets[i][2] = allLinePositions.get(i)[2] - (posEE.x * 4000.0 + render_image.width);
+            line_endeffector_offsets[2] = allLinePositions.get(i)[2] - (posEE.x * 4000.0 + render_image.width);
             // y2 offset
-            line_endeffector_offsets[i][3] = allLinePositions.get(i)[3] - (posEE.y * 4000.0); 
-          }
-        
-          PVector[] lineForces = new PVector[allLinePositions.size()];
-          for (int i=0; i < line_endeffector_offsets.length; i++) {
-            // change force orientation depending on tree type
-            lineForces[i] = calculate_line_force(line_endeffector_offsets[i], penWall, 1); // 1 applies inward line force
-          }
-          // ensure only one vertical line can enact force upon the end effector at once
-          for (int i=0; i < lineForces.length; i++) {
-            if (lineForces[i].x != 0 || lineForces[i].y != 0) {
-              fWall.add(lineForces[i]);
+            line_endeffector_offsets[3] = allLinePositions.get(i)[3] - (posEE.y * 4000.0); 
+            
+            // calculate line forces here for efficiency
+            PVector cur_line_force = calculate_line_force(line_endeffector_offsets, penWall, 1);
+            if (cur_line_force.x != 0 || cur_line_force.y != 0) {
+              fWall.add(cur_line_force);
               break;
-            }
+            } 
           }
             
           // Change force offset for horizontal lines depending on tree type
@@ -450,30 +444,27 @@ class SimulationThread implements Runnable {
             penWall.set(5, 0);
           }
         
-          float[][] hor_line_endeffector_offsets = new float[allHorLinePositions.size()][4];
+          float[] hor_line_endeffector_offsets = new float[4];
           
           for (int i=0; i < allHorLinePositions.size(); i++) {
             // x1 offset
-            hor_line_endeffector_offsets[i][0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + render_image.width);
+            hor_line_endeffector_offsets[0] = allHorLinePositions.get(i)[0] - (posEE.x*4000.0 + render_image.width);
             // y1 offset
-            hor_line_endeffector_offsets[i][1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
+            hor_line_endeffector_offsets[1] = allHorLinePositions.get(i)[1] - (posEE.y*4000.0); 
             // x2 offset
-            hor_line_endeffector_offsets[i][2] = allHorLinePositions.get(i)[2] - (posEE.x*4000.0 + render_image.width);
+            hor_line_endeffector_offsets[2] = allHorLinePositions.get(i)[2] - (posEE.x*4000.0 + render_image.width);
             // y2 offset
-            hor_line_endeffector_offsets[i][3] = allHorLinePositions.get(i)[3] - (posEE.y*4000.0); 
-          }
-        
-          PVector[] horLineForces = new PVector[allHorLinePositions.size()];
-          for (int i=0; i < hor_line_endeffector_offsets.length; i++) {
-            horLineForces[i] = calculate_line_force(hor_line_endeffector_offsets[i], penWall, 1);
-          }
-          
-          // Ensure horizontal force is off when crossing vertical lines
-          for (int i=0; i < horLineForces.length; i++) {
-            if (fWall.x == 0) {
-              fWall.add(horLineForces[i]);
+            hor_line_endeffector_offsets[3] = allHorLinePositions.get(i)[3] - (posEE.y*4000.0);
+            
+            // calculate line forces here for efficiency
+            PVector cur_line_force = calculate_line_force(hor_line_endeffector_offsets, penWall, -1);
+            if (cur_line_force.x != 0 || cur_line_force.y != 0 && fWall.x == 0) {
+              fWall.add(cur_line_force);
+              print(cur_line_force);
+              break;
             }
           }
+        
           break;
         
         case 2: // 
@@ -559,72 +550,279 @@ class SimulationThread implements Runnable {
             penWallGrey.set(1/((height_offset_grey + force_offset_grey)*2), 0);
           }
           
-          float[][] line_endeffector_offsets_left = new float[allLinePositions_left.size()][4];
+          float[] line_endeffector_offsets_left = new float[4];
         
           for (int i=0; i < allLinePositions_left.size(); i++) {
             // x1 offset
-            line_endeffector_offsets_left[i][0] = allLinePositions_left.get(i)[0] - (posEE.x*4000.0 + render_image.width);
+            line_endeffector_offsets_left[0] = allLinePositions_left.get(i)[0] - (posEE.x*4000.0 + render_image.width);
             // y1 offset
-            line_endeffector_offsets_left[i][1] = allLinePositions_left.get(i)[1] - (posEE.y*4000.0); 
+            line_endeffector_offsets_left[1] = allLinePositions_left.get(i)[1] - (posEE.y*4000.0); 
             // x2 offset
-            line_endeffector_offsets_left[i][2] = allLinePositions_left.get(i)[2] - (posEE.x*4000.0 + render_image.width);
+            line_endeffector_offsets_left[2] = allLinePositions_left.get(i)[2] - (posEE.x*4000.0 + render_image.width);
             // y2 offset
-            line_endeffector_offsets_left[i][3] = allLinePositions_left.get(i)[3] - (posEE.y*4000.0); 
-          }
-        
-          PVector[] lineForces_left = new PVector[allLinePositions_left.size()];
-          for (int i=0; i < line_endeffector_offsets_left.length; i++) {
-            lineForces_left[i] = calculate_line_force(line_endeffector_offsets_left[i], penWall, -1); // -1 applies outward line force
-          }
-        
-          //boolean size_change = false;
-          // ensure only one vertical line can enact force upon the end effector at once
-          for (int i=0; i < lineForces_left.length; i++) {
-            if (lineForces_left[i].x != 0 || lineForces_left[i].y != 0) {
-              fWall.add(lineForces_left[i]);
-              //// change size of end effector
-              //rEE_vis = 0.002;
-              //create_pantagraph();
-              //size_change = true;
+            line_endeffector_offsets_left[3] = allLinePositions_left.get(i)[3] - (posEE.y*4000.0); 
+            
+            // calculate line forces here for efficiency
+            PVector cur_line_force = calculate_line_force(line_endeffector_offsets_left, penWall, -1); // -1 applies outward line force
+            if (cur_line_force.x != 0 || cur_line_force.y != 0) {
+              fWall.add(cur_line_force);
               break;
             }
           }
-          //// reset size if not in any lines
-          //if (!size_change && rEE_vis != 0.003) {
-          //  rEE_vis = 0.003;
-          //  create_pantagraph();
-          //}
+       
           
-          float[][] line_endeffector_offsets_left_grey = new float[allLinePositions_left_grey.size()][4];
+          float[] line_endeffector_offsets_left_grey = new float[4];
         
           for (int i=0; i < allLinePositions_left_grey.size(); i++) {
             // x1 offset
-            line_endeffector_offsets_left_grey[i][0] = allLinePositions_left_grey.get(i)[0] - (posEE.x*4000.0 + render_image.width);
+            line_endeffector_offsets_left_grey[0] = allLinePositions_left_grey.get(i)[0] - (posEE.x*4000.0 + render_image.width);
             // y1 offset
-            line_endeffector_offsets_left_grey[i][1] = allLinePositions_left_grey.get(i)[1] - (posEE.y*4000.0); 
+            line_endeffector_offsets_left_grey[1] = allLinePositions_left_grey.get(i)[1] - (posEE.y*4000.0); 
             // x2 offset
-            line_endeffector_offsets_left_grey[i][2] = allLinePositions_left_grey.get(i)[2] - (posEE.x*4000.0 + render_image.width);
+            line_endeffector_offsets_left_grey[2] = allLinePositions_left_grey.get(i)[2] - (posEE.x*4000.0 + render_image.width);
             // y2 offset
-            line_endeffector_offsets_left_grey[i][3] = allLinePositions_left_grey.get(i)[3] - (posEE.y*4000.0); 
-          }
-        
-          PVector[] lineForces_left_grey = new PVector[allLinePositions_left_grey.size()];
-          for (int i=0; i < line_endeffector_offsets_left_grey.length; i++) {
-            lineForces_left_grey[i] = calculate_line_force(line_endeffector_offsets_left_grey[i], penWallGrey, 1);
-          }
-        
-          // ensure only one vertical line can enact force upon the end effector at once
-          for (int i=0; i < lineForces_left_grey.length; i++) {
-            if ((lineForces_left_grey[i].x != 0 || lineForces_left_grey[i].y != 0)) {
-              fWall.add(lineForces_left_grey[i]);
+            line_endeffector_offsets_left_grey[3] = allLinePositions_left_grey.get(i)[3] - (posEE.y*4000.0); 
+            
+            // calculate line forces here for efficiency
+            PVector cur_line_force = calculate_line_force(line_endeffector_offsets_left_grey, penWallGrey, 1);
+            if (cur_line_force.x != 0 || cur_line_force.y != 0) {
+              fWall.add(cur_line_force);
               break;
             }
           }
+        
           break;
 
         case 3:
+          // change force offsets for inner random lines based on end effector position
+          if (tree_state == 1) { // Oak
+            float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_middle = force_offset_middle + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_middle = force_offset_middle + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_middle = force_offset_middle + 0.03;
+            }
+            float height_offset_middle = (posEE.y + rEE)/1.0; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_middle = height_offset_middle + 0.05;
+            }
 
+            penWallGrey.set(0, 1/((height_offset_middle + force_offset_middle)*4));
+          }
+          else if (tree_state == 2) { // Cedar
+            float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_middle = force_offset_middle + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_middle = force_offset_middle + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_middle = force_offset_middle + 0.03;
+            }
+            float height_offset_middle = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_middle = height_offset_middle + 0.05;
+            }
+
+            penWallGrey.set(0, 1/((height_offset_middle + force_offset_middle)*3));
+          }
+          else if (tree_state == 3) { // Chestnut
+            float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_middle = force_offset_middle + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_middle = force_offset_middle + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_middle = force_offset_middle + 0.03;
+            }
+            float height_offset_middle = (posEE.y + rEE)/1.0; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_middle = height_offset_middle + 0.05;
+            }
+
+            penWallGrey.set(1/((height_offset_middle + force_offset_middle)*3), 0);
+          }
+          else { // Aspen
+            float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_middle = force_offset_middle + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_middle = force_offset_middle + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_middle = force_offset_middle + 0.03;
+            }
+            float height_offset_middle = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_middle = height_offset_middle + 0.05;
+            }
+
+            penWallGrey.set(1/((height_offset_middle + force_offset_middle)*2), 0);
+          }
+          
+          float[] line_endeffector_offsets_middle = new float[4];
+          
+        
+          for (int i=0; i < linesMiddleRT3_positions.size(); i++) {
+            // x1 offset
+            line_endeffector_offsets_middle[0] = linesMiddleRT3_positions.get(i)[0] - (posEE.x*4000.0 + render_image.width);
+            // y1 offset
+            line_endeffector_offsets_middle[1] = linesMiddleRT3_positions.get(i)[1] - (posEE.y*4000.0); 
+            // x2 offset
+            line_endeffector_offsets_middle[2] = linesMiddleRT3_positions.get(i)[2] - (posEE.x*4000.0 + render_image.width);
+            // y2 offset
+            line_endeffector_offsets_middle[3] = linesMiddleRT3_positions.get(i)[3] - (posEE.y*4000.0);
+            
+            // calculate line forces here for efficiency
+            PVector cur_line_force = calculate_line_force(line_endeffector_offsets_middle, penWallGrey, -1); // -1 applies outward line force
+            if (cur_line_force.x != 0 || cur_line_force.y != 0) {
+              fWall.add(cur_line_force);
+              break;
+            }
+          }
+          
+          float[] line_endeffector_offsets_borders = new float[4];
+        
+          for (int i=0; i < linesBorderRT3_positions.size(); i++) {
+            // x1 offset
+            line_endeffector_offsets_borders[0] = linesBorderRT3_positions.get(i)[0] - (posEE.x*4000.0 + render_image.width);
+            // y1 offset
+            line_endeffector_offsets_borders[1] = linesBorderRT3_positions.get(i)[1] - (posEE.y*4000.0); 
+            // x2 offset
+            line_endeffector_offsets_borders[2] = linesBorderRT3_positions.get(i)[2] - (posEE.x*4000.0 + render_image.width);
+            // y2 offset
+            line_endeffector_offsets_borders[3] = linesBorderRT3_positions.get(i)[3] - (posEE.y*4000.0); 
+            
+            // calculate line forces here for efficiency
+            PVector cur_line_force = calculate_line_force(line_endeffector_offsets_borders, penWall, 1);
+            if (cur_line_force.x != 0 || cur_line_force.y != 0) {
+              fWall.add(cur_line_force);
+              break;
+            }
+          }
+        
           break;
+          
+          case 4:
+          // change force offsets for inner random lines based on end effector position
+          if (tree_state == 1) { // Oak
+            float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_middle = force_offset_middle + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_middle = force_offset_middle + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_middle = force_offset_middle + 0.03;
+            }
+            float height_offset_middle = (posEE.y + rEE)/1.0; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_middle = height_offset_middle + 0.05;
+            }
+
+            penWallGrey.set(1/((height_offset_middle + force_offset_middle))*1.5, 0);
+          }
+          else if (tree_state == 2) { // Cedar
+            float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_middle = force_offset_middle + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_middle = force_offset_middle + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_middle = force_offset_middle + 0.03;
+            }
+            float height_offset_middle = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_middle = height_offset_middle + 0.05;
+            }
+
+            penWallGrey.set(1/((height_offset_middle + force_offset_middle))*1.05, 0);
+          }
+          else if (tree_state == 3) { // Chestnut
+            float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_middle = force_offset_middle + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_middle = force_offset_middle + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_middle = force_offset_middle + 0.03;
+            }
+            float height_offset_middle = (posEE.y + rEE)/1.0; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_middle = height_offset_middle + 0.05;
+            }
+
+            penWallGrey.set(0, 1/((height_offset_middle + force_offset_middle))*1.5);
+          }
+          else { // Aspen
+            float force_offset_middle = 0.005 + abs(posEE.x)*1.5; // to account for weakness when the end effector is perpendicular to the motors
+            if (( posEE.x > 0.02) || (posEE.x < -0.02)) {
+              force_offset_middle = force_offset_middle + 0.01;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y < 0.05){
+              force_offset_middle = force_offset_middle + 0.02;
+            }
+            else if ((( posEE.x < 0.02) && (posEE.x > -0.02)) && posEE.y >= 0.05){
+              force_offset_middle = force_offset_middle + 0.03;
+            }
+            float height_offset_middle = (posEE.y + rEE)/1.75; // to account for the difference in force close and far from the motors
+        
+            // adjustments to height offset
+            if (posEE.y < 0.03) {
+              height_offset_middle = height_offset_middle + 0.05;
+            }
+
+            penWallGrey.set(0, 1/((height_offset_middle + force_offset_middle))*0.9);
+          }
+          
+          line_endeffector_offsets_middle = new float[4];
+          
+        
+          for (int i=0; i < linesMiddleRT4_positions.size(); i++) {
+            // x1 offset
+            line_endeffector_offsets_middle[0] = linesMiddleRT4_positions.get(i)[0] - (posEE.x*4000.0 + render_image.width);
+            // y1 offset
+            line_endeffector_offsets_middle[1] = linesMiddleRT4_positions.get(i)[1] - (posEE.y*4000.0); 
+            // x2 offset
+            line_endeffector_offsets_middle[2] = linesMiddleRT4_positions.get(i)[2] - (posEE.x*4000.0 + render_image.width);
+            // y2 offset
+            line_endeffector_offsets_middle[3] = linesMiddleRT4_positions.get(i)[3] - (posEE.y*4000.0);
+            
+            // calculate line forces here for efficiency
+            PVector cur_line_force = calculate_line_force(line_endeffector_offsets_middle, penWallGrey, -1); // -1 applies outward line force
+            if (cur_line_force.x != 0 || cur_line_force.y != 0) {
+              fWall.add(cur_line_force);
+              println(cur_line_force);
+              break;
+            }
+          }
       }
       
       fEE = (fWall.copy()).mult(-1);
@@ -644,7 +842,7 @@ class SimulationThread implements Runnable {
 /* Helper functions section, place helper functions here ***************************************************************/
 void init_combinations() {
   trials = new ArrayList<Trial>();
-  int count_render_techniques = 4;
+  int count_render_techniques = 3;
   int count_types_trees = 4;
   int count_images_per_tree_type = 4;
 
@@ -676,7 +874,7 @@ void start_trial() {
   println("tree_type = ", tree_type);
   // println("tree_image_index = ", tree_image_index);
 
-  force_render_technique = render_type;
+  force_render_technique = render_type; // changed to 3 for testing, go back to render_type when done
 
   if (tree_type == 1) { // Oak
     tree_state = 1;
@@ -866,7 +1064,7 @@ void process_image(String image) {
       startJ = 0;
       boolean is_pshape = true;
       
-      for (int i = 0; i < render_image.width; i += int(random(1,4))) {
+      for (int i = 0; i < render_image.width; i += int(random(1,10))) {
         random_pixel_quantity = int(random(2, 25));
         startJ = 0;
         is_pshape = !is_pshape;
