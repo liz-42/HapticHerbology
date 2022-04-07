@@ -172,6 +172,7 @@ String random_fact = general_facts[0];
 String trial_result; 
 
 IntList combinations = new IntList();
+ArrayList<Trial> trials = new ArrayList<Trial>();
 
 // Array to switch between images with arrow keys
 String[] all_images = oak_trees;
@@ -201,8 +202,12 @@ float theta; // For tree
 float intro_tree_timer = 0;
 boolean intro_tree_direction = true;
 
-// score
+// Score
 int total_score = 0;
+boolean stats_calculated = false;
+int[][] rt1 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+int[][] rt2 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+int[][] rt3 = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
 
 PFont font;
 
@@ -630,32 +635,45 @@ class SimulationThread implements Runnable {
 
 /* Helper functions section, place helper functions here ***************************************************************/
 void init_combinations() {
-  combinations = new IntList();
   int count_render_techniques = 2;
+  trials = new ArrayList<Trial>();
   int count_types_trees = 4;
   int count_images_per_tree_type = 4;
 
   for (int i = 1; i <= count_render_techniques; ++i) {
     for (int j = 1; j <= count_types_trees; ++j) {
       for (int k = 0; k < count_images_per_tree_type; ++k) {
-        combinations.append(i * 1000 + j * 100 + k);
+        trials.add(new Trial(i,j,k));
       }
     }
   }
-  // println(combinations);
+  // printTrials();
 }
 
 void start_trial() {
-  combinations.shuffle();
+  // combinations.shuffle();
 
-  int first_combination = combinations.get(0);
-  combinations.remove(0);
+  Trial trial = getNextTrial();
+  // This shouldn't happen, but catch it in case...
+  if (trial == null){
+    is_experiment_active = false;
+    game_over = true;
+    return;
+  }
 
-  int render_type = first_combination / 1000;
-  first_combination -= render_type * 1000;
-  int tree_type = first_combination / 100;
-  first_combination -= tree_type * 100;
-  int tree_image_index = first_combination;
+
+  int render_type = trial.render_technique;
+  int tree_type = trial.tree_type;
+  int tree_image_index = trial.tree_image_index;
+
+  // int first_combination = combinations.get(0);
+  // combinations.remove(0);
+
+  // int render_type = first_combination / 1000;
+  // first_combination -= render_type * 1000;
+  // int tree_type = first_combination / 100;
+  // first_combination -= tree_type * 100;
+  // int tree_image_index = first_combination;
 
   println("render_type = ", render_type);
   println("tree_type = ", tree_type);
@@ -708,6 +726,11 @@ void process_image(String image) {
 
   // Horizontal lines
   allHorLines = new ArrayList<PShape>();
+
+  linesMiddleRT3_positions = new ArrayList<Integer[]>();
+  linesMiddleRT3 = new ArrayList<PShape>();
+  linesBorderRT3_positions = new ArrayList<Integer[]>();
+  linesBorderRT3 = new ArrayList<PShape>();
 
   // Load images
   render_image = loadImage(image);
@@ -905,7 +928,7 @@ void update_animation(float th1, float th2, float xE, float yE) {
   // if(combinations.size() > 0){
   textSize(25);
   textAlign(RIGHT, TOP);
-  text("Trials remaining " + combinations.size(), width, 0);
+  text("Trials remaining " + countTrialsRemaining(), width, 0);
   // }
 
   // Image titles
@@ -1002,12 +1025,56 @@ void update_intro() {
 void update_conclusion() {
   background(0);
 
+  if(!stats_calculated)
+    calculate_stats();
+
   textAlign(CENTER, CENTER);
   text("Thank you for participating in this Haptic Herbology informal pre-testing!", width/2, height/5);
   textSize(26);
   text("Your final score is: " + total_score, width/2, height/4);
   textSize(26);
   text("Press `r` to start again.", width/2, height/3);
+
+  
+}
+
+void calculate_stats() {
+  stats_calculated = true;
+
+  Trial curr;
+  for (int i = 0; i < trials.size(); ++i) {
+    curr = trials.get(i);
+    if (curr.render_technique == 1) {
+      rt1[curr.tree_type - 1][curr.tree_image_index] += curr.participant_guess == curr.tree_type ? 1 : -1;
+    } else if (curr.render_technique == 2) {
+      rt2[curr.tree_type - 1][curr.tree_image_index] += curr.participant_guess == curr.tree_type ? 1 : -1;
+    } else if (curr.render_technique == 3) {
+      rt3[curr.tree_type - 1][curr.tree_image_index] += curr.participant_guess == curr.tree_type ? 1 : -1;
+    }
+  }
+
+  println("rt1");
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      print(rt1[i][j] + " ");
+    }
+    println();
+  }
+
+  println("rt2");
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      print(rt2[i][j] + " ");
+    }
+    println();
+  }
+  println("rt3");
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      print(rt3[i][j] + " ");
+    }
+    println();
+  }
 }
 
 PVector device_to_graphics(PVector deviceFrame) {
@@ -1079,6 +1146,8 @@ void participantSelection(int selected_image) {
   if (!is_experiment_active)
     return;
 
+  setParticipantGuess(force_render_technique, tree_state, cur_image, selected_image);
+
   println("####################################");
   println("Participant has selected image ", selected_image);
   println("The correct answer was ", tree_state);
@@ -1086,10 +1155,10 @@ void participantSelection(int selected_image) {
   
   String correct_answer = "";
   switch (tree_state) {
-    case 1: // oak
+    case 1:
       correct_answer = "oak";
       break;
-    case 2: //
+    case 2:
       correct_answer = "cedar";
       break;
     case 3:
@@ -1108,7 +1177,7 @@ void participantSelection(int selected_image) {
   trial_result = "The correct answer is: " + correct_answer;
 
   // Done trials?
-  if(combinations.size() <= 0) {
+  if(countTrialsRemaining() <= 0) {
     is_experiment_active = false;
     game_over = true;
   }
@@ -1284,4 +1353,103 @@ void branch(float h) {
     branch(h);
     popMatrix();
   }
+}
+
+
+public class Trial {
+  public int render_technique;
+  public int tree_type;
+  public int tree_image_index;
+
+  int participant_guess;
+
+
+  public Trial (int rt, int tt, int tii) {
+    render_technique = rt;
+    tree_type = tt;
+    tree_image_index = tii;
+    participant_guess = -1;
+  }
+
+  public void setParticipantGuess (int pg) {
+    participant_guess = pg;
+  }
+
+  public int getParticipantGuess() {
+    return participant_guess;
+  }
+
+  public int getRanking(){
+    return render_technique * 1000 + tree_type * 100 + tree_image_index;
+  }
+}
+
+void setParticipantGuess(int rt, int tt, int tii, int score){
+  int rank = rt * 1000 + tt * 100 + tii;
+
+  for (int i = 0; i < trials.size(); ++i) {
+    if(trials.get(i).getRanking() == rank){
+      trials.get(i).setParticipantGuess(score);
+    }
+  }
+}
+
+int countTrialsRemaining() {
+  int count = 0;
+  for (int i = 0; i < trials.size(); ++i) {
+    if(trials.get(i).getParticipantGuess() == -1){
+      count++; 
+    }
+  }
+
+  return count;
+}
+
+Trial getNextTrial() {
+  shuffleTrials(); 
+
+  for (int i = 0; i < trials.size(); ++i) {
+    if(trials.get(i).getParticipantGuess() == -1){
+      return trials.get(i);
+    }
+  }
+
+  return null;
+}
+
+void shuffleTrials() {  
+  if(trials.size() <= 1)
+    return;
+
+  int totalCount = trials.size();
+  for (int i = 0; i < totalCount; ++i) {
+      Trial curr = trials.get(i);
+      int newIndex = i + int(random(totalCount - i));
+
+      trials.set(i, trials.get(newIndex));
+      trials.set(newIndex, curr);
+  }
+}
+
+void sortTrials() {
+  if(trials.size() <= 1)
+    return;
+
+  for (int i = 0; i < trials.size(); i++) {
+    for (int j = trials.size() - 1; j > i; j--) {
+      if(trials.get(i).getRanking() > trials.get(j).getRanking()){
+        Trial temp = trials.get(i);
+        trials.set(i, trials.get(j));
+        trials.set(j, temp);
+      }
+    }
+  }
+}
+
+void printTrials() {
+  println("Printing trials");
+  for (int i = 0; i < trials.size(); ++i) {
+    print(trials.get(i).getRanking(), " ");
+  }
+  println();
 }
