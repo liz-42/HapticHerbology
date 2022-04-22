@@ -204,7 +204,7 @@ boolean show_lines = false;
 
 boolean is_experiment_active = false;
 boolean showing_tree_fact = false;
-boolean experiment = true; // if true, don't show plant facts
+boolean experiment = false; // if true, don't show plant facts
 boolean game_over = false;
 float theta; // For tree
 float intro_tree_timer = 0;
@@ -842,7 +842,7 @@ class SimulationThread implements Runnable {
 /* Helper functions section, place helper functions here ***************************************************************/
 void init_combinations() {
   trials = new ArrayList<Trial>();
-  int count_render_techniques = 4;
+  int count_render_techniques = 1;
   int count_types_trees = 4;
   int count_images_per_tree_type = 4;
 
@@ -874,19 +874,23 @@ void start_trial() {
   println("tree_type = ", tree_type);
   // println("tree_image_index = ", tree_image_index);
 
-  force_render_technique = render_type; // changed to 3 for testing, go back to render_type when done
+  //force_render_technique = render_type; // changed to 3 for testing, go back to render_type when done
 
   if (tree_type == 1) { // Oak
     tree_state = 1;
+    force_render_technique = 2;
     all_images = oak_trees;
   } else if (tree_type == 2) { // Cedar
     tree_state = 2;
+    force_render_technique = 2;
     all_images = cedar_trees;
   } else if (tree_type == 3) { // Chestnut
     tree_state = 3;
+    force_render_technique = 4;
     all_images = chestnut_trees;
   } else if (tree_type == 4) { // Aspen
     tree_state = 4;
+    force_render_technique = 1;
     all_images = aspen_trees;
   } else {
     println("There's an error in the initial data, ", tree_type, " is not a type of tree");
