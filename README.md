@@ -13,3 +13,6 @@ Third iteration:
 - The code from the final iteration is in the master branch
 - To run the code as an experiment (do not display tree facts between trials), set the variable experiment = true. Otherwise, the correct answer and a tree fact will appear between trials, as would be consistent with the final interface
 - To show the underlying line forces and the real image, press p. 
+
+
+Finally, the version of the STEM learning interface with the most effective rendering method for each tree type is in the STEM_Interface branch. Oak trees and cedar trees use the two line method, chestnut uses the random line method, and aspen uses the single line method. 
